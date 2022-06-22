@@ -8,8 +8,8 @@ This metacommunity time series analyzed were selected from four databases: BioTI
 
 In this repository, the selected metacommunity time series can be accessed:
 ```
-  *Combined_assemblages_20220208.RDATA
-  *Combined_assemblages_same_locations_20220208.RDATA
+  Combined_assemblages_20220208.RDATA
+  Combined_assemblages_same_locations_20220208.RDATA
 ```
 
 The first RDATA file contains filtered dataset based on grid-based approach, and the second contains only sites in same geographic coordinates sampled across years (see manuscript for more details).
