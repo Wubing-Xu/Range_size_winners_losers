@@ -1,7 +1,8 @@
 # Range_size_winners_losers
 This repository contains data and code necessary to reproduce results shown in the manuscript "Rich get richer: widespread species increase while narrow-ranged species decrease in biodiversity time series".
 
-**Contacts:** 
+**Contacts:**
+
     Wubing Xu – wubing.xu@idiv.de or wbingxu@gmail.com
 
 ## Data
