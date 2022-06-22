@@ -3,7 +3,7 @@ This repository contains data and code necessary to reproduce results shown in t
 
 **Contacts:**
 
-    Wubing Xu – wubing.xu@idiv.de or wbingxu@gmail.com
+   Wubing Xu – wubing.xu@idiv.de or wbingxu@gmail.com
 
 ## Data
 This metacommunity time series analyzed were selected from four databases: BioTIME (19), RivFishTIME (20), InsectChange (21), and a previously unpublished database (Metacommunity Resurvey). The BioTIME data can be accessed on Zenodo (https://doi.org/10.5281/zenodo.2602708) or through the BioTIME website (http://biotime.standrews.ac.uk/); the RivFishTIME data can be accessed through the iDiv Biodiversity Portal: https://doi.org/10.25829/idiv.1873-10-4000; the InsectChange data can be accessed at http://onlinelibrary.wiley.com/doi/10.1002/ecy.3354/suppinfo; the ‘Metacommunity Resurvey’ data can be accessed through the iDiv Biodiversity Portal: https://doi.org/10.25829/idiv.3503-jevu6s (will be activated soon).
