@@ -43,13 +43,14 @@ load("models/brm_oc_aoo10_region.RDATA")
 ## get coefficients from models using range size defined as AOO in the resolution of 50 km
 
 ## global fixed effects of range size
-brm_oc_aoo50_fixed <- fixef(brm_oc_aoo50, robust = TRUE, probs = c(0.025, 0.975)) %>%
-  as_tibble() %>%
-  mutate(term = c("intercept", "slope")) 
+brm_oc_aoo50_fixed <- fixef(brm_oc_aoo50, probs = c(0.025, 0.975)) %>%
+  as_tibble() %>% 
+  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
 
 ## random effects of rang size for each study
-brm_oc_aoo50_coef <- coef(brm_oc_aoo50, robust = TRUE, probs = c(0.025, 0.975))[[1]]
+brm_oc_aoo50_coef <- coef(brm_oc_aoo50, probs = c(0.025, 0.975))[[1]]
 brm_oc_aoo50_coef <- as_tibble(brm_oc_aoo50_coef) %>%
+  dplyr::select(1:8) %>%
    mutate(study = rownames(brm_oc_aoo50_coef)) 
 colnames(brm_oc_aoo50_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
                                       "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
@@ -70,13 +71,14 @@ brm_oc_aoo50_coef <- brm_oc_aoo50_coef %>%
 ## get coefficients from models using range size defined as AOO in the resolution of 100 km
 
 ## global fixed effects of range size
-brm_oc_aoo100_fixed <- fixef(brm_oc_aoo100, robust = TRUE, probs = c(0.025, 0.975)) %>%
+brm_oc_aoo100_fixed <- fixef(brm_oc_aoo100,  probs = c(0.025, 0.975)) %>%
   as_tibble() %>%
-  mutate(term = c("intercept", "slope"))
+  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
 
 ## random effects of rang size for each study
-brm_oc_aoo100_coef <- coef(brm_oc_aoo100, robust = TRUE, probs = c(0.025, 0.975))[[1]]
+brm_oc_aoo100_coef <- coef(brm_oc_aoo100, probs = c(0.025, 0.975))[[1]]
 brm_oc_aoo100_coef <- as_tibble(brm_oc_aoo100_coef) %>%
+  dplyr::select(1:8) %>%
   mutate(study = rownames(brm_oc_aoo100_coef)) 
 colnames(brm_oc_aoo100_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
                                       "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
@@ -97,13 +99,17 @@ brm_oc_aoo100_coef <- brm_oc_aoo100_coef %>%
 ## get coefficients from models using range size defined as ahull hulls (alpha = 6)
 
 ## global fixed effects of range size
-brm_oc_ahull6_fixed <- fixef(brm_oc_ahull6, robust = TRUE, probs = c(0.025, 0.975)) %>%
+brm_oc_ahull6_fixed <- fixef(brm_oc_ahull6, probs = c(0.025, 0.975)) %>%
   as_tibble() %>%
-  mutate(term = c("intercept", "slope")) 
+  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
+
+colnames(brm_oc_ahull6_fixed)[3:4] <- c("Q2.5", "Q97.5")
+
 
 ## random effects of rang size for each study
 brm_oc_ahull6_coef <- coef(brm_oc_ahull6, robust = TRUE, probs = c(0.025, 0.975))[[1]]
 brm_oc_ahull6_coef <- as_tibble(brm_oc_ahull6_coef) %>%
+  dplyr::select(1:8) %>%
   mutate(study = rownames(brm_oc_ahull6_coef)) 
 colnames(brm_oc_ahull6_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
                                       "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
@@ -124,14 +130,15 @@ brm_oc_ahull6_coef <- brm_oc_ahull6_coef %>%
 ## get coefficients from models using assemblage data with same locations through years 
 
 ## global fixed effects of range size
-brm_oc_aoo10_sloc_fixed <- fixef(brm_oc_aoo10_sloc, robust = TRUE, probs = c(0.025, 0.975)) %>%
+brm_oc_aoo10_sloc_fixed <- fixef(brm_oc_aoo10_sloc, probs = c(0.025, 0.975)) %>%
   as_tibble() %>%
-  mutate(term = c("intercept", "slope")) 
+  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
 
 
 ## random effects of rang size for each study
-brm_oc_aoo10_sloc_coef <- coef(brm_oc_aoo10_sloc, robust = TRUE, probs = c(0.025, 0.975))[[1]]
+brm_oc_aoo10_sloc_coef <- coef(brm_oc_aoo10_sloc, probs = c(0.025, 0.975))[[1]]
 brm_oc_aoo10_sloc_coef <- as_tibble(brm_oc_aoo10_sloc_coef) %>%
+  dplyr::select(1:8) %>%
   mutate(study = rownames(brm_oc_aoo10_sloc_coef)) 
 colnames(brm_oc_aoo10_sloc_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
                                       "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
@@ -152,13 +159,14 @@ brm_oc_aoo10_sloc_coef <- brm_oc_aoo10_sloc_coef %>%
 ## get coefficients from models using occupancy that were calculated using first and last year community data 
 
 ## global fixed effects of range size
-brm_oc_aoo10_2yr_fixed <- fixef(brm_oc_aoo10_2yr, robust = TRUE, probs = c(0.025, 0.975)) %>%
+brm_oc_aoo10_2yr_fixed <- fixef(brm_oc_aoo10_2yr, probs = c(0.025, 0.975)) %>%
   as_tibble() %>%
-  mutate(term = c("intercept", "slope")) 
+  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
 
 ## random effects of rang size for each study
-brm_oc_aoo10_2yr_coef <- coef(brm_oc_aoo10_2yr, robust = TRUE, probs = c(0.025, 0.975))[[1]]
+brm_oc_aoo10_2yr_coef <- coef(brm_oc_aoo10_2yr, probs = c(0.025, 0.975))[[1]]
 brm_oc_aoo10_2yr_coef <- as_tibble(brm_oc_aoo10_2yr_coef) %>%
+  dplyr::select(1:8) %>%
   mutate(study = rownames(brm_oc_aoo10_2yr_coef)) 
 colnames(brm_oc_aoo10_2yr_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
                                       "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
@@ -174,13 +182,14 @@ brm_oc_aoo10_2yr_coef <- brm_oc_aoo10_2yr_coef %>%
 ## get coefficients from models using species that have 5-times of occurrences in GBIF than in community data
 
 ## global fixed effects of range size
-brm_oc_aoo10_rgbif_fixed <- fixef(brm_oc_aoo10_rgbif, robust = TRUE, probs = c(0.025, 0.975)) %>%
+brm_oc_aoo10_rgbif_fixed <- fixef(brm_oc_aoo10_rgbif, probs = c(0.025, 0.975)) %>%
   as_tibble() %>%
-  mutate(term = c("intercept", "slope")) 
+  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
 
 ## random effects of rang size for each study
-brm_oc_aoo10_rgbif_coef <- coef(brm_oc_aoo10_rgbif, robust = TRUE, probs = c(0.025, 0.975))[[1]]
+brm_oc_aoo10_rgbif_coef <- coef(brm_oc_aoo10_rgbif, probs = c(0.025, 0.975))[[1]]
 brm_oc_aoo10_rgbif_coef <- as_tibble(brm_oc_aoo10_rgbif_coef) %>%
+  dplyr::select(1:8) %>%
   mutate(study = rownames(brm_oc_aoo10_rgbif_coef)) 
 colnames(brm_oc_aoo10_rgbif_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
                                       "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
@@ -196,13 +205,14 @@ brm_oc_aoo10_rgbif_coef <- brm_oc_aoo10_rgbif_coef %>%
 ## get coefficients from models using species with initial occupancy not as 0 or 1.
 
 ## global fixed effects of range size
-brm_oc_aoo10_no01_fixed <- fixef(brm_oc_aoo10_no01, robust = TRUE, probs = c(0.025, 0.975)) %>%
+brm_oc_aoo10_no01_fixed <- fixef(brm_oc_aoo10_no01, probs = c(0.025, 0.975)) %>%
   as_tibble() %>%
-  mutate(term = c("intercept", "slope")) 
+  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
 
 ## random effects of rang size for each study
-brm_oc_aoo10_no01_coef <- coef(brm_oc_aoo10_no01, robust = TRUE, probs = c(0.025, 0.975))[[1]]
+brm_oc_aoo10_no01_coef <- coef(brm_oc_aoo10_no01, probs = c(0.025, 0.975))[[1]]
 brm_oc_aoo10_no01_coef <- as_tibble(brm_oc_aoo10_no01_coef) %>%
+  dplyr::select(1:8) %>%
   mutate(study = rownames(brm_oc_aoo10_no01_coef)) 
 colnames(brm_oc_aoo10_no01_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
                                       "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
@@ -226,9 +236,10 @@ nstudy_realm_taxa<- oc_period %>%
   mutate(realm_taxa = paste(realm, taxon_new, sep = "_"),
          realm_taxa = gsub(" ", "", realm_taxa))
 
-brm_oc_aoo10_realm_taxa_fixed <- fixef(brm_oc_aoo10_realm_taxa, robust = TRUE, probs = c(0.025, 0.975, 0.1, 0.9)) %>%
+brm_oc_aoo10_realm_taxa_fixed <- fixef(brm_oc_aoo10_realm_taxa, probs = c(0.025, 0.975, 0.1, 0.9)) %>%
   as.data.frame() %>% 
   rownames_to_column(var = "realm_taxa") %>% 
+  filter(! grepl("sigma", realm_taxa)) %>%
   mutate(term = rep(c("intercept", "slope"), each = n()/2)) %>%
   mutate(realm_taxa = gsub("realm_taxa", "", realm_taxa),
          realm_taxa = gsub(":cl.aoo10", "", realm_taxa)) %>%
@@ -245,24 +256,19 @@ brm_oc_aoo10_realm_taxa_line <- brm_oc_aoo10_realm_taxa_fixed %>%
                         cl.xmin = min(cl.aoo10),
                         cl.xmax = max(cl.aoo10)))
 
-## get fitted values of occupancy and occupancy change for each observed range size from models including 
+## get fitted values of occupancy change for each observed range size from models including 
 # interaction between range size and realm_region
-# get the fitted values: the number of sites occupied at the second period
+
 brm_oc_aoo10_realm_taxa_fitted <- fitted(brm_oc_aoo10_realm_taxa, re_formula = NA, nsamples = 1000) %>%
   as_tibble() %>% 
   bind_cols(oc_period %>% 
-              dplyr::select(study, aoo10, occup_change_logit, nsamp_used, occup_first_logit, occup_last_logit))
+              dplyr::select(study, aoo10, occup_change_sqroot, nsamp_used))
 
-# calculate the predicted occupancy change
 brm_oc_aoo10_realm_taxa_fitted <- brm_oc_aoo10_realm_taxa_fitted %>% 
-  mutate(occup_last_logit_pred =  qlogis(Estimate/nsamp_used),
-         occup_last_logit_Q2.5 =  qlogis(Q2.5/nsamp_used),
-         occup_last_logit_Q97.5 =  qlogis(Q97.5/nsamp_used),
-         occup_change_logit_pred = occup_last_logit_pred - occup_first_logit,
-         occup_change_logit_Q2.5 = occup_last_logit_Q2.5 - occup_first_logit,
-         occup_change_logit_Q97.5 = occup_last_logit_Q97.5 - occup_first_logit) %>%
+  rename(oc_sqroot_pred = Estimate, oc_sqroot_Q2.5 = Q2.5, oc_sqroot_Q97.5 = Q97.5) %>%
   left_join(dat_meta %>% distinct(study, database, studyID, taxon_new, taxon_final, realm, region)) %>% 
   distinct(aoo10, realm, taxon_new , .keep_all = TRUE)
+
 
 
 #############
@@ -276,9 +282,10 @@ nstudy_realm_region <- oc_period %>%
   mutate(realm_region = paste(realm, region, sep = "_"),
          realm_region = gsub(" ", "", realm_region))
 
-brm_oc_aoo10_realm_region_fixed <- fixef(brm_oc_aoo10_realm_region, robust = TRUE, probs = c(0.025, 0.975, 0.1, 0.9)) %>%
+brm_oc_aoo10_realm_region_fixed <- fixef(brm_oc_aoo10_realm_region, probs = c(0.025, 0.975, 0.1, 0.9)) %>%
   as.data.frame() %>% 
   rownames_to_column(var = "realm_region") %>% 
+  filter(! grepl("sigma", realm_region)) %>%
   mutate(term = rep(c("intercept", "slope"), each = n()/2)) %>%
   mutate(realm_region = gsub("realm_region", "", realm_region),
          realm_region = gsub(":cl.aoo10", "", realm_region)) %>%
@@ -295,25 +302,19 @@ brm_oc_aoo10_realm_region_line <- brm_oc_aoo10_realm_region_fixed %>%
                         cl.xmin = min(cl.aoo10),
                         cl.xmax = max(cl.aoo10)))
 
-## get fitted values of occupancy and occupancy change for each observed range size from models including 
+## get fitted values of  occupancy change for each observed range size from models including 
 # interaction between range size and realm_region
-# get the fitted values: the number of sites occupied at the second period
+
 brm_oc_aoo10_realm_region_fitted <- fitted(brm_oc_aoo10_realm_region, re_formula = NA, nsamples = 1000) %>%
   as_tibble() %>% 
   bind_cols(oc_period %>% 
-              dplyr::select(study, aoo10, occup_change_logit, nsamp_used, occup_first_logit, occup_last_logit))
+              dplyr::select(study, aoo10, occup_change_sqroot, nsamp_used))
 
-# calculate the predicted occupancy change
 brm_oc_aoo10_realm_region_fitted <- brm_oc_aoo10_realm_region_fitted %>% 
-  mutate(occup_last_logit_pred =  qlogis(Estimate/nsamp_used),
-         occup_last_logit_Q2.5 =  qlogis(Q2.5/nsamp_used),
-         occup_last_logit_Q97.5 =  qlogis(Q97.5/nsamp_used),
-         occup_change_logit_pred = occup_last_logit_pred - occup_first_logit,
-         occup_change_logit_Q2.5 = occup_last_logit_Q2.5 - occup_first_logit,
-         occup_change_logit_Q97.5 = occup_last_logit_Q97.5 - occup_first_logit) %>%
+  rename(oc_sqroot_pred = Estimate, oc_sqroot_Q2.5 = Q2.5, oc_sqroot_Q97.5 = Q97.5) %>%
   left_join(dat_meta %>% distinct(study, database, studyID, taxon_new, taxon_final, realm, region)) %>% 
   distinct(aoo10, realm, region , .keep_all = TRUE)
-
+  
 
 # save results
 save(brm_oc_aoo50_fixed, brm_oc_aoo50_coef, 

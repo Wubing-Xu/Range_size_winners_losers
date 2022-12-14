@@ -22,73 +22,58 @@ for(x in needed_libs){
 index <- as.integer(Sys.getenv("SLURM_ARRAY_TASK_ID"))
 
 # load occupancy change and meta data
-load("intermediate_results/occuapncy.RDATA")
-load("intermediate_results/occuapncy_same_locations.RDATA")
+load("intermediate_results/occupancy.RDATA")
+load("intermediate_results/occupancy_same_locations.RDATA")
 load("data/Assemblages_protection.RDATA")
 load("data/Assemblages_regions.RDATA")
 load("data/Assemblages_taxa.RDATA")
 
 
-# changes in species richness between early and late periods for each study
-sprich_dymamic <- occupancy_change_period %>% 
-  group_by(study, database, studyID, sprich) %>%
-  summarise(sprich_extin = sum(dynamic == "extinction"),
-            sprich_pers = sum(dynamic == "persistent"),
-            sprich_colon = sum(dynamic == "colonization"),
-            sprich_first = sprich_extin + sprich_pers,
-            sprich_last = sprich_colon + sprich_pers,
-            sprich_total = sprich_extin + sprich_pers + sprich_colon, 
-            sprich_change = log(sprich_last/sprich_first)) %>%
-  ungroup() %>%
-  mutate(p_sprich_extin = sprich_extin/sprich_total,
-         p_sprich_pers = sprich_pers/sprich_total,
-         p_sprich_colon = sprich_colon/sprich_total)
-
-
 # combine meta data with percentage of samples in protected areas, regions, updated taxa,  
 # and richness and its change and percentage of species in different dynamics 
 dat_meta <- dat_meta %>% 
-  left_join(dat_psamp_inPA %>% dplyr::select(study, psamp_inPA_bfstart, psamp_inPA_bflate, psamp_inPA_wdpa, coordinate_local)) %>%
+  mutate(nsamp_used = min_samp* nyears_combined) %>%
+  left_join(dat_coverage_PA %>% dplyr::select(study, coordinate_local, psamp_inPA_bfstart, psamp_inPA_bflate, psamp_inPA_wdpa, 
+                                              parea_inPA_bflate, parea_inPA_wdpa)) %>%
   left_join(region %>% dplyr::select(study, region)) %>%
-  left_join(sprich_dymamic %>% dplyr::select(study, sprich_first:p_sprich_colon)) %>%
+  dplyr::select(!taxon_new) %>%
+  left_join(dat_meta_taxa %>% dplyr::select(study, taxon_new, taxon_final)) %>%
+  relocate(taxon_new, taxon_final, .after = taxon) %>%
+  mutate(lat_cent = abs(cent_lat) - mean(abs(cent_lat)),
+         sprich_cent = log10(sprich) - mean(log10(sprich)),       
+         duration_cent = log10(duration) - mean(log10(duration)),
+         startyr_cent = start_year - mean(start_year),
+         extent_cent = log10(extent_km2) - mean(log10(extent_km2)),
+         nsamp_cent = log10(nsamp_used) - mean(log10(nsamp_used)))
+  
+# for datasets including only samples in same locations across years
+dat_sloc_meta <- dat_sloc_meta %>% 
+  left_join(region %>% dplyr::select(study, region)) %>%
   dplyr::select(!taxon_new) %>%
   left_join(dat_meta_taxa %>% dplyr::select(study, taxon_new, taxon_final)) %>%
   relocate(taxon_new, taxon_final, .after = taxon)
 
-# for datasets including only samples in same locations across years
-dat_sloc_meta <- dat_sloc_meta %>% 
-  left_join(dat_psamp_inPA %>% dplyr::select(study, psamp_inPA_bfstart, psamp_inPA_bflate, psamp_inPA_wdpa, coordinate_local)) %>%
-  left_join(region %>% dplyr::select(study, region)) %>%
-  dplyr::select(!taxon_new) %>%
-  left_join(dat_meta_taxa %>% dplyr::select(study, taxon_new, taxon_final)) %>%
-  relocate(taxon_new, taxon_final, .after = taxon)
 
 # transform variables and add metadata of studies
 oc_period <- occupancy_change_period %>% 
-  mutate(lost = ifelse(dynamic == "extinction", 1, 0),
-         occup_first_no01 = ifelse(occup_first == 0, 0.01, occup_first),
-         occup_first_no01 = ifelse(occup_first  == 1, 0.99, occup_first_no01),
-         occup_last_no01 = ifelse(occup_last == 0, 0.01, occup_last),
-         occup_last_no01 = ifelse(occup_last  == 1, 0.99, occup_last_no01),         
-         occup_first_logit = qlogis(occup_first_no01),
-         occup_last_logit = qlogis(occup_last_no01),
-         occup_change_logit = occup_last_logit- occup_first_logit,
+  mutate(occup_first_asin = asin(sqrt(occup_first)),
+         occup_last_asin = asin(sqrt(occup_last)),
+         occup_change_asin = occup_last_asin - occup_first_asin,
+         occup_change_sqroot = ifelse(occup_change >= 0, sqrt(abs(occup_change)), -sqrt(abs(occup_change))),
          cl.aoo10 = log10(aoo10)- mean(log10(aoo10)),
          cl.aoo50 = log10(aoo50)- mean(log10(aoo50)),
          cl.aoo100 = log10(aoo100)- mean(log10(aoo100)),
-         cl.aoo10_early = log10(aoo10_early)- mean(log10(aoo10_early), na.rm=TRUE),
          cl.ahull6 = log10(ahull6)- mean(log10(ahull6))) %>%
-  left_join(dat_meta %>% dplyr::select(study, taxon_new, taxon_final, realm, region))
+  left_join(dat_meta %>% dplyr::select(study, taxon_new, taxon_final, realm, region, 
+                                       coordinate_local, psamp_inPA_bfstart, psamp_inPA_bflate, psamp_inPA_wdpa, parea_inPA_bflate, parea_inPA_wdpa,
+                                       lat_cent, sprich_cent, duration_cent, startyr_cent, extent_cent, nsamp_cent))
+
 
 oc_2yr <- occupancy_change_2yr %>% 
-  mutate(lost = ifelse(dynamic == "extinction", 1, 0),
-         occup_first_no01 = ifelse(occup_first == 0, 0.01, occup_first),
-         occup_first_no01 = ifelse(occup_first == 1, 0.99, occup_first_no01),
-         occup_last_no01 = ifelse(occup_last == 0, 0.01, occup_last),
-         occup_last_no01 = ifelse(occup_last == 1, 0.99, occup_last_no01),         
-         occup_first_logit = qlogis(occup_first_no01),
-         occup_last_logit = qlogis(occup_last_no01),
-         occup_change_logit = occup_last_logit- occup_first_logit,
+  mutate(occup_first_asin = asin(sqrt(occup_first)),
+         occup_last_asin = asin(sqrt(occup_last)),
+         occup_change_asin = occup_last_asin - occup_first_asin,
+         occup_change_sqroot = ifelse(occup_change >= 0, sqrt(abs(occup_change)), -sqrt(abs(occup_change))),
          cl.aoo10 = log10(aoo10)- mean(log10(aoo10)),
          cl.aoo50 = log10(aoo50)- mean(log10(aoo50)),
          cl.aoo100 = log10(aoo100)- mean(log10(aoo100)),
@@ -96,14 +81,10 @@ oc_2yr <- occupancy_change_2yr %>%
   left_join(dat_meta %>% dplyr::select(study, taxon_new, taxon_final, realm, region))
 
 oc_period_sloc <- occupancy_change_sloc_period %>% 
-  mutate(lost = ifelse(dynamic == "extinction", 1, 0),
-         occup_first_no01 = ifelse(occup_first == 0, 0.01, occup_first),
-         occup_first_no01 = ifelse(occup_first  == 1, 0.99, occup_first_no01),
-         occup_last_no01 = ifelse(occup_last == 0, 0.01, occup_last),
-         occup_last_no01 = ifelse(occup_last  == 1, 0.99, occup_last_no01),         
-         occup_first_logit = qlogis(occup_first_no01),
-         occup_last_logit = qlogis(occup_last_no01),
-         occup_change_logit = occup_last_logit- occup_first_logit,
+  mutate(occup_first_asin = asin(sqrt(occup_first)),
+         occup_last_asin = asin(sqrt(occup_last)),
+         occup_change_asin = occup_last_asin - occup_first_asin,
+         occup_change_sqroot = ifelse(occup_change >= 0, sqrt(abs(occup_change)), -sqrt(abs(occup_change))),
          cl.aoo10 = log10(aoo10)- mean(log10(aoo10)),
          cl.aoo50 = log10(aoo50)- mean(log10(aoo50)),
          cl.aoo100 = log10(aoo100)- mean(log10(aoo100)),
@@ -137,11 +118,11 @@ oc_period <- oc_period %>%
 # relationship between range size (AOO 10 km) and occupancy change using all species
 if(index == 1){
   t1 <- Sys.time()
-  brm_oc_aoo10 <- brm(nocc_last|trials(nsamp_used) ~ cl.aoo10 + offset(occup_first_logit) + 
-                        (1 + cl.aoo10|study), 
-                      family = binomial, data = oc_period ,
+  brm_oc_aoo10 <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                         sigma ~ log10(nsamp_used)), 
+                      family = gaussian(), data = oc_period,
                       chains = 4, cores = 4, iter = 8000, thin = 4,
-                      control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
                       file = "models/brm_output/brm_oc_aoo10")
   print(brm_oc_aoo10)
   t2 <- Sys.time()
@@ -152,11 +133,11 @@ if(index == 1){
 # sensitivity analyses using AOO 50 km
 if(index == 2){
   t1 <- Sys.time()
-  brm_oc_aoo50 <- brm(nocc_last|trials(nsamp_used) ~ cl.aoo50 + offset(occup_first_logit) + 
-                        (1 + cl.aoo50|study), 
-                      family = binomial, data = oc_period ,
+  brm_oc_aoo50 <- brm(bf(occup_change_sqroot ~ cl.aoo50 + (1 + cl.aoo50|study),
+                         sigma ~ log10(nsamp_used)), 
+                      family = gaussian, data = oc_period,
                       chains = 4, cores = 4, iter = 8000, thin = 4,
-                      control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
                       file = "models/brm_output/brm_oc_aoo50")
   print(brm_oc_aoo50)
   t2 <- Sys.time()
@@ -167,11 +148,11 @@ if(index == 2){
 # sensitivity analyses using AOO 100 km
 if(index == 3){
   t1 <- Sys.time()
-  brm_oc_aoo100 <- brm(nocc_last|trials(nsamp_used) ~ cl.aoo100 + offset(occup_first_logit) + 
-                         (1 + cl.aoo100|study), 
-                       family = binomial, data = oc_period ,
+  brm_oc_aoo100 <- brm(bf(occup_change_sqroot ~ cl.aoo100 + (1 + cl.aoo100|study),
+                          sigma ~ log10(nsamp_used)), 
+                       family = gaussian, data = oc_period,
                        chains = 4, cores = 4, iter = 8000, thin = 4,
-                       control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                       control = list(adapt_delta = 0.9, max_treedepth = 10), 
                        file = "models/brm_output/brm_oc_aoo100")
   print(brm_oc_aoo100)
   t2 <- Sys.time()
@@ -182,11 +163,11 @@ if(index == 3){
 # sensitivity analyses using EOO (alpha hulls)
 if(index == 4){
   t1 <- Sys.time()
-  brm_oc_ahull6 <- brm(nocc_last|trials(nsamp_used) ~ cl.ahull6 + offset(occup_first_logit) + 
-                         (1 + cl.ahull6|study), 
-                       family = binomial, data = oc_period ,
+  brm_oc_ahull6 <- brm(bf(occup_change_sqroot ~ cl.ahull6 + (1 + cl.ahull6|study),
+                          sigma ~ log10(nsamp_used)), 
+                       family = gaussian, data = oc_period,
                        chains = 4, cores = 4, iter = 8000, thin = 4,
-                       control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                       control = list(adapt_delta = 0.9, max_treedepth = 10), 
                        file = "models/brm_output/brm_oc_ahull6")
   print(brm_oc_ahull6)
   t2 <- Sys.time()
@@ -197,11 +178,11 @@ if(index == 4){
 # sensitivity analyses using occupancy based on assemblages in the first and last years
 if(index == 5){
   t1 <- Sys.time()
-  brm_oc_aoo10_2yr <- brm(nocc_last|trials(nsamp_used) ~ cl.aoo10 + offset(occup_first_logit) + 
-                            (1 + cl.aoo10|study), 
-                          family = binomial, data = oc_2yr ,
+  brm_oc_aoo10_2yr <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                             sigma ~ log10(nsamp_used)), 
+                          family = gaussian(), data = oc_2yr, 
                           chains = 4, cores = 4, iter = 8000, thin = 4,
-                          control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                          control = list(adapt_delta = 0.9, max_treedepth = 10), 
                           file = "models/brm_output/brm_oc_aoo10_2yr")
   print(brm_oc_aoo10_2yr)
   t2 <- Sys.time()
@@ -212,12 +193,11 @@ if(index == 5){
 # sensitivity analyses using only the species that had at least five times more occurrences in GBIF than in the assemblage dataset
 if(index == 6){
   t1 <- Sys.time()
-  brm_oc_aoo10_rgbif <- brm(nocc_last|trials(nsamp_used) ~ cl.aoo10 + offset(occup_first_logit) + 
-                              (1 + cl.aoo10|study), 
-                            family = binomial, 
-                            data = oc_period %>% filter(ratio_nocc_gbif > 5),
+  brm_oc_aoo10_rgbif <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                               sigma ~ log10(nsamp_used)), 
+                            family = gaussian(), data = oc_period %>% filter(ratio_nocc_gbif > 5), 
                             chains = 4, cores = 4, iter = 8000, thin = 4,
-                            control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                            control = list(adapt_delta = 0.9, max_treedepth = 10), 
                             file = "models/brm_output/brm_oc_aoo10_rgbif")
   print(brm_oc_aoo10_rgbif)
   t2 <- Sys.time()
@@ -228,12 +208,11 @@ if(index == 6){
 # sensitivity analyses using species with initial occupancy > 0 and < 1
 if(index == 7){
   t1 <- Sys.time()
-  brm_oc_aoo10_no01 <- brm(nocc_last|trials(nsamp_used) ~ cl.aoo10 + offset(occup_first_logit) + 
-                             (1 + cl.aoo10|study), 
-                           family = binomial, 
-                           data = oc_period %>% filter(occup_first > 0 & occup_first < 1),
+  brm_oc_aoo10_no01 <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                              sigma ~ log10(nsamp_used)), 
+                           family = gaussian(), data = oc_period %>% filter(occup_first > 0 & occup_first < 1), 
                            chains = 4, cores = 4, iter = 8000, thin = 4,
-                           control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                           control = list(adapt_delta = 0.9, max_treedepth = 10), 
                            file = "models/brm_output/brm_oc_aoo10_no01")
   print(brm_oc_aoo10_no01)
   t2 <- Sys.time()
@@ -244,11 +223,11 @@ if(index == 7){
 # sensitivity analyses using assemblage data with sites in the same locations across years
 if(index == 8){
   t1 <- Sys.time()
-  brm_oc_aoo10_sloc <- brm(nocc_last|trials(nsamp_used) ~ cl.aoo10 + offset(occup_first_logit) + 
-                        (1 + cl.aoo10|study), 
-                      family = binomial, data = oc_period_sloc,
+  brm_oc_aoo10_sloc <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                              sigma ~ log10(nsamp_used)), 
+                           family = gaussian(), data = oc_period_sloc, 
                       chains = 4, cores = 4, iter = 8000, thin = 4,
-                      control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
                       file = "models/brm_output/brm_oc_aoo10_sloc")
   print(brm_oc_aoo10_sloc)
   t2 <- Sys.time()
@@ -261,11 +240,11 @@ if(index == 8){
 # include the interaction term between range size and realm
 if(index == 9){
   t1 <- Sys.time()
-  brm_oc_aoo10_realm <- brm(nocc_last|trials(nsamp_used) ~ 0 +  realm + cl.aoo10:realm + offset(occup_first_logit) + 
-                              (1 + cl.aoo10|study), 
-                            family = binomial, data = oc_period ,
+  brm_oc_aoo10_realm <- brm(bf(occup_change_sqroot ~ 0 +  realm + cl.aoo10:realm + (1 + cl.aoo10|study),
+                               sigma ~ log10(nsamp_used)), 
+                            family = gaussian(), data = oc_period,
                             chains = 4, cores = 4, iter = 8000, thin = 4,
-                            control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                            control = list(adapt_delta = 0.9, max_treedepth = 10), 
                             file = "models/brm_output/brm_oc_aoo10_realm")
   print(brm_oc_aoo10_realm)
   t2 <- Sys.time()
@@ -276,11 +255,11 @@ if(index == 9){
 # include the interaction between range size and taxa
 if(index == 10){
   t1 <- Sys.time()
-  brm_oc_aoo10_taxa <- brm(nocc_last|trials(nsamp_used) ~ 0 +  taxon_new + cl.aoo10:taxon_new + offset(occup_first_logit) + 
-                             (1 + cl.aoo10|study), 
-                           family = binomial, data = oc_period ,
+  brm_oc_aoo10_taxa <- brm(bf(occup_change_sqroot ~ 0 +  taxon_new + cl.aoo10:taxon_new + (1 + cl.aoo10|study),
+                              sigma ~ log10(nsamp_used)), 
+                           family = gaussian(), data = oc_period, 
                            chains = 4, cores = 4, iter = 8000, thin = 4,
-                           control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                           control = list(adapt_delta = 0.9, max_treedepth = 10), 
                            file = "models/brm_output/brm_oc_aoo10_taxa")
   print(brm_oc_aoo10_taxa)
   t2 <- Sys.time()
@@ -291,11 +270,11 @@ if(index == 10){
 # include the interaction between range size and taxa_final (distinguish plants, fish in different realms)
 if(index == 11){
   t1 <- Sys.time()
-  brm_oc_aoo10_taxafinal <- brm(nocc_last|trials(nsamp_used) ~ 0 +  taxon_final + cl.aoo10:taxon_final + offset(occup_first_logit) + 
-                                  (1 + cl.aoo10|study), 
-                                family = binomial, data = oc_period ,
+  brm_oc_aoo10_taxafinal <- brm(bf(occup_change_sqroot ~ 0 +  taxon_final + cl.aoo10:taxon_final + (1 + cl.aoo10|study),
+                                   sigma ~ log10(nsamp_used)), 
+                                family = gaussian(), data = oc_period, 
                                 chains = 4, cores = 4, iter = 8000, thin = 4,
-                                control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                                control = list(adapt_delta = 0.9, max_treedepth = 10), 
                                 file = "models/brm_output/brm_oc_aoo10_taxafinal")
   print(brm_oc_aoo10_taxafinal)
   t2 <- Sys.time()
@@ -306,11 +285,11 @@ if(index == 11){
 # include the interaction between range size and regions (continents and oceans)
 if(index == 12){
   t1 <- Sys.time()
-  brm_oc_aoo10_region <- brm(nocc_last|trials(nsamp_used) ~ 0 +  region + cl.aoo10:region + offset(occup_first_logit) + 
-                                (1 + cl.aoo10|study), 
-                              family = binomial, data = oc_period ,
+  brm_oc_aoo10_region <- brm(bf(occup_change_sqroot ~ 0 +  region + cl.aoo10:region + (1 + cl.aoo10|study),
+                                sigma ~ log10(nsamp_used)), 
+                             family = gaussian(), data = oc_period, 
                              chains = 4, cores = 4, iter = 8000, thin = 4,
-                             control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                             control = list(adapt_delta = 0.9, max_treedepth = 10), 
                               file = "models/brm_output/brm_oc_aoo10_region")
   print(brm_oc_aoo10_region)
   t2 <- Sys.time()
@@ -321,11 +300,11 @@ if(index == 12){
 # include the interaction between range size and the combination of realm and taxa
 if(index == 13){
   t1 <- Sys.time()
-  brm_oc_aoo10_realm_taxa <- brm(nocc_last|trials(nsamp_used) ~ 0 +  realm_taxa + cl.aoo10:realm_taxa + offset(occup_first_logit) + 
-                                   (1 + cl.aoo10|study), 
-                                 family = binomial, data = oc_period ,
+  brm_oc_aoo10_realm_taxa <- brm(bf(occup_change_sqroot ~ 0 +  realm_taxa + cl.aoo10:realm_taxa + (1 + cl.aoo10|study),
+                                    sigma ~ log10(nsamp_used)), 
+                                 family = gaussian(), data = oc_period, 
                                  chains = 4, cores = 4, iter = 8000, thin = 4,
-                                 control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                                 control = list(adapt_delta = 0.9, max_treedepth = 10), 
                                  file = "models/brm_output/brm_oc_aoo10_realm_taxa")
   print(brm_oc_aoo10_realm_taxa)
   t2 <- Sys.time()
@@ -336,14 +315,203 @@ if(index == 13){
 # include the interaction between range size and the combination of realm and regions
 if(index == 14){
   t1 <- Sys.time()
-  brm_oc_aoo10_realm_region <- brm(nocc_last|trials(nsamp_used) ~ 0 +  realm_region + cl.aoo10:realm_region + offset(occup_first_logit) + 
-                                     (1 + cl.aoo10|study), 
-                                   family = binomial, data = oc_period ,
+  brm_oc_aoo10_realm_region <- brm(bf(occup_change_sqroot ~ 0 +  realm_region + cl.aoo10:realm_region + (1 + cl.aoo10|study),
+                                      sigma ~ log10(nsamp_used)), 
+                                   family = gaussian(), data = oc_period, 
                                    chains = 4, cores = 4, iter = 8000, thin = 4,
-                                   control = list(adapt_delta = 0.9, max_treedepth = 12), 
+                                   control = list(adapt_delta = 0.9, max_treedepth = 10), 
                                    file = "models/brm_output/brm_oc_aoo10_realm_region")
   print(brm_oc_aoo10_realm_region)
   t2 <- Sys.time()
   print(t2 - t1)
   save(brm_oc_aoo10_realm_region, file = "models/brm_oc_aoo10_realm_region.RDATA")
 }
+
+
+# include the interaction between range size and protection status for realms
+if(index == 15){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_psampwdpa <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10*psamp_inPA_wdpa):realm + (1 + cl.aoo10|study),
+                               sigma ~ log10(nsamp_used)), 
+                            family = gaussian(), data = oc_period,
+                            chains = 4, cores = 4, iter = 8000, thin = 4,
+                            control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                            file = "models/brm_output/brm_oc_aoo10_realm_psampwdpa")
+  print(brm_oc_aoo10_realm_psampwdpa)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_psampwdpa, file = "models/brm_oc_aoo10_realm_psampwdpa.RDATA")
+}
+
+if(index == 16){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_psampbflate <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10*psamp_inPA_bflate):realm + (1 + cl.aoo10|study),
+                                         sigma ~ log10(nsamp_used)), 
+                                      family = gaussian(), data = oc_period,
+                                      chains = 4, cores = 4, iter = 8000, thin = 4,
+                                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                      file = "models/brm_output/brm_oc_aoo10_realm_psampbflate")
+  print(brm_oc_aoo10_realm_psampbflate)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_psampbflate, file = "models/brm_oc_aoo10_realm_psampbflate.RDATA")
+}
+
+if(index == 17){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_pareawdpa <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10*parea_inPA_wdpa):realm + (1 + cl.aoo10|study),
+                                         sigma ~ log10(nsamp_used)), 
+                                      family = gaussian(), data = oc_period,
+                                      chains = 4, cores = 4, iter = 8000, thin = 4,
+                                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                      file = "models/brm_output/brm_oc_aoo10_realm_pareawdpa")
+  print(brm_oc_aoo10_realm_pareawdpa)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_pareawdpa, file = "models/brm_oc_aoo10_realm_pareawdpa.RDATA")
+}
+
+if(index == 18){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_pareabflate <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10*parea_inPA_bflate):realm + (1 + cl.aoo10|study),
+                                         sigma ~ log10(nsamp_used)), 
+                                      family = gaussian(), data = oc_period,
+                                      chains = 4, cores = 4, iter = 8000, thin = 4,
+                                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                      file = "models/brm_output/brm_oc_aoo10_realm_pareabflate")
+  print(brm_oc_aoo10_realm_pareabflate)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_pareabflate, file = "models/brm_oc_aoo10_realm_pareabflate.RDATA")
+}
+
+
+
+if(index == 19){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_covariate <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10 + psamp_inPA_wdpa + cl.aoo10:psamp_inPA_wdpa +
+                                                                             lat_cent + cl.aoo10:lat_cent + 
+                                                                             sprich_cent + cl.aoo10:sprich_cent + 
+                                                                             duration_cent + cl.aoo10:duration_cent + 
+                                                                             startyr_cent + cl.aoo10:startyr_cent + 
+                                                                             extent_cent + cl.aoo10:extent_cent + 
+                                                                             nsamp_cent + cl.aoo10:nsamp_cent):realm + (1 + cl.aoo10|study),
+                                         sigma ~ log10(nsamp_used)), 
+                                      family = gaussian(), data = oc_period,
+                                      chains = 4, cores = 4, iter = 8000, thin = 4,
+                                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                      file = "models/brm_output/brm_oc_aoo10_realm_covariate")
+  print(brm_oc_aoo10_realm_covariate)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_covariate, file = "models/brm_oc_aoo10_realm_covariate.RDATA")
+}
+
+
+if(index == 20){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_covariate1 <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10 + psamp_inPA_bflate + cl.aoo10:psamp_inPA_bflate +
+                                                                             lat_cent + cl.aoo10:lat_cent + 
+                                                                             sprich_cent + cl.aoo10:sprich_cent + 
+                                                                             duration_cent + cl.aoo10:duration_cent + 
+                                                                             startyr_cent + cl.aoo10:startyr_cent + 
+                                                                             extent_cent + cl.aoo10:extent_cent + 
+                                                                             nsamp_cent + cl.aoo10:nsamp_cent):realm + (1 + cl.aoo10|study),
+                                         sigma ~ log10(nsamp_used)), 
+                                      family = gaussian(), data = oc_period,
+                                      chains = 4, cores = 4, iter = 8000, thin = 4,
+                                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                      file = "models/brm_output/brm_oc_aoo10_realm_covariate1")
+  print(brm_oc_aoo10_realm_covariate1)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_covariate1, file = "models/brm_oc_aoo10_realm_covariate1.RDATA")
+}
+
+
+if(index == 21){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_covariate2 <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10 + parea_inPA_wdpa+ cl.aoo10:parea_inPA_wdpa +
+                                                                              lat_cent + cl.aoo10:lat_cent + 
+                                                                              sprich_cent + cl.aoo10:sprich_cent + 
+                                                                              duration_cent + cl.aoo10:duration_cent + 
+                                                                              startyr_cent + cl.aoo10:startyr_cent + 
+                                                                              extent_cent + cl.aoo10:extent_cent + 
+                                                                              nsamp_cent + cl.aoo10:nsamp_cent):realm + (1 + cl.aoo10|study),
+                                          sigma ~ log10(nsamp_used)), 
+                                       family = gaussian(), data = oc_period,
+                                       chains = 4, cores = 4, iter = 8000, thin = 4,
+                                       control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                       file = "models/brm_output/brm_oc_aoo10_realm_covariate2")
+  print(brm_oc_aoo10_realm_covariate2)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_covariate2, file = "models/brm_oc_aoo10_realm_covariate2.RDATA")
+}
+
+
+if(index == 22){
+  t1 <- Sys.time()
+  brm_oc_aoo10_realm_covariate3 <- brm(bf(occup_change_sqroot ~ 0 +  realm + (cl.aoo10 + parea_inPA_bflate + cl.aoo10:parea_inPA_bflate +
+                                                                              lat_cent + cl.aoo10:lat_cent + 
+                                                                              sprich_cent + cl.aoo10:sprich_cent + 
+                                                                              duration_cent + cl.aoo10:duration_cent + 
+                                                                              startyr_cent + cl.aoo10:startyr_cent + 
+                                                                              extent_cent + cl.aoo10:extent_cent + 
+                                                                              nsamp_cent + cl.aoo10:nsamp_cent):realm + (1 + cl.aoo10|study),
+                                          sigma ~ log10(nsamp_used)), 
+                                       family = gaussian(), data = oc_period,
+                                       chains = 4, cores = 4, iter = 8000, thin = 4,
+                                       control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                       file = "models/brm_output/brm_oc_aoo10_realm_covariate3")
+  print(brm_oc_aoo10_realm_covariate3)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_realm_covariate3, file = "models/brm_oc_aoo10_realm_covariate3.RDATA")
+}
+
+
+# overall model for three realms
+if(index == 23){
+  t1 <- Sys.time()
+  brm_oc_aoo10_terrestrial <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                         sigma ~ log10(nsamp_used)), 
+                      family = gaussian(), data = oc_period  %>% filter(realm == "Terrestrial"),
+                      chains = 4, cores = 4, iter = 8000, thin = 4,
+                      control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                      file = "models/brm_output/brm_oc_aoo10_terrestrial")
+  print(brm_oc_aoo10_terrestrial)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_terrestrial, file = "models/brm_oc_aoo10_terrestrial.RDATA")
+}
+
+if(index == 24){
+  t1 <- Sys.time()
+  brm_oc_aoo10_freshwater <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                                     sigma ~ log10(nsamp_used)), 
+                                  family = gaussian(), data = oc_period  %>% filter(realm == "Freshwater"),
+                                  chains = 4, cores = 4, iter = 8000, thin = 4,
+                                  control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                  file = "models/brm_output/brm_oc_aoo10_freshwater")
+  print(brm_oc_aoo10_freshwater)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_freshwater, file = "models/brm_oc_aoo10_freshwater.RDATA")
+}
+
+if(index == 25){
+  t1 <- Sys.time()
+  brm_oc_aoo10_marine <- brm(bf(occup_change_sqroot ~ cl.aoo10 + (1 + cl.aoo10|study),
+                                     sigma ~ log10(nsamp_used)), 
+                                  family = gaussian(), data = oc_period  %>% filter(realm == "Marine"),
+                                  chains = 4, cores = 4, iter = 8000, thin = 4,
+                                  control = list(adapt_delta = 0.9, max_treedepth = 10), 
+                                  file = "models/brm_output/brm_oc_aoo10_marine")
+  print(brm_oc_aoo10_marine)
+  t2 <- Sys.time()
+  print(t2 - t1)
+  save(brm_oc_aoo10_marine, file = "models/brm_oc_aoo10_marine.RDATA")
+}
+
+

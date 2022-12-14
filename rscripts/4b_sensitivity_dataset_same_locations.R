@@ -7,7 +7,8 @@ rm(list = ls())
 user <- Sys.info()["nodename"]
 path2wd <- switch(user,
                   "IDIVNB341" = "C:/Dropbox/iDiv/homogenization_occupancy",
-                  "IDIVTS02" = "D:/ya90meri/homogenization_occupancy")
+                  "IDIVTS02" = "D:/ya90meri/homogenization_occupancy",
+                  "IDIVTS01" = "H:/wubing/iDiv/homogenization_occupancy")
 setwd(path2wd)
 
 # load packages
@@ -24,7 +25,7 @@ sapply(needed_libs, usePackage)
 rm(usePackage)
 
 
-load("data/Combined_assemblages_20220208.RDATA")
+load("data/Combined_assemblages.RDATA")
 
 
 # filter the dataset to maximum the number of resurveyed samples (same locations) for at least two years within a region
@@ -93,5 +94,5 @@ dat_sloc_meta <- dat_meta %>%
 
 
 save(dat_sloc, dat_sloc_meta,
-     file = "data/Combined_assemblages_same_locations_20220208.RDATA")
+     file = "data/Combined_assemblages_same_locations.RDATA")
 

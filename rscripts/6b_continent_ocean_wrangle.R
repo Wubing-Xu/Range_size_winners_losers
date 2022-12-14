@@ -24,7 +24,7 @@ rm(usePackage)
 
 
 ## load coordinates of studies
-load("data/Combined_assemblages_20220208.RDATA")
+load("data/Combined_assemblages.RDATA")
 
 # download and prepare spatial data
 ocean <- rnaturalearth::ne_download(scale=10, type="geography_marine_polys", category='physical', load=TRUE)

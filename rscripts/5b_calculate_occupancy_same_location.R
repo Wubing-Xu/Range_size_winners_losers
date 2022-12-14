@@ -12,7 +12,7 @@ setwd(path2wd)
 library(tidyverse)
 
 
-load("data/Combined_assemblages_same_locations_20220208.RDATA")
+load("data/Combined_assemblages_same_locations.RDATA")
 load("data/Species_rangesize.RDATA")
 
 
@@ -226,7 +226,7 @@ occupancy_change_sloc_period <- occupancy_sloc_period_nest %>%
   dplyr::select(-data) %>%
   bind_cols(occupancy_change_sloc_period) %>% 
   left_join(dat_sloc %>% distinct(specieskey, nocc_community, nocc_gbif, ratio_nocc_gbif), by = c("specieskey")) %>%
-  left_join(spsuma[,c(2,14:19)], by = c("specieskey")) %>%
+  left_join(spsuma[,c(2,14:17)], by = c("specieskey")) %>%
   filter(dynamic != "absent")
 
 table(occupancy_change_sloc_period[, c("dynamic", "database")])
@@ -234,5 +234,5 @@ table(occupancy_change_sloc_period[, c("dynamic", "database")])
 
 # save occupancy 
 save(occupancy_sloc_period, occupancy_change_sloc_period, dat_sloc_meta, 
-     file = "intermediate_results/occuapncy_same_locations.RDATA")
+     file = "intermediate_results/occupancy_same_locations.RDATA")
 

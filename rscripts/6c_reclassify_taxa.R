@@ -26,7 +26,7 @@ sapply(needed_libs, usePackage)
 rm(usePackage)
 
 
-load("data/Combined_assemblages_20220208.RDATA")
+load("data/Combined_assemblages.RDATA")
 load("data/combined_checklists/splist_gbif_all.columns.RDATA")
 
 

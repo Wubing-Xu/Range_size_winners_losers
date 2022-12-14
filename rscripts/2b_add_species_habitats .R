@@ -62,10 +62,21 @@ table(id) #24 bird names can't be matched with bird habitat data
 birdgbif <- birdgbif %>% 
   left_join(habitat %>% distinct(species, speciesKey, .keep_all = TRUE), by=c("species", "specieskey"="speciesKey"))
 
+# determine haibitat (land or ocean)
+birdgbif <- birdgbif %>% 
+  mutate(habitat = ifelse((Habitat_Caves == 1 | Habitat_Desert == 1| Habitat_Forest == 1 | Habitat_Grassland == 1 | 
+                             Habitat_Savanna == 1 |Habitat_Shrubland == 1) & (Habitat_Marine_Neritic == 0 | Habitat_Marine_Oceanic == 0), "land",
+                          ifelse((Habitat_Caves == 0 | Habitat_Desert == 0| Habitat_Forest == 0 | Habitat_Grassland == 0 | 
+                                    Habitat_Savanna == 0 |Habitat_Shrubland == 0) & (Habitat_Marine_Neritic == 1 | Habitat_Marine_Oceanic == 1), 
+                                 "ocean", "land_ocean")))
+
 # manual classification and fill missing data
 write_csv(birdgbif, file="Data/bird_habitats/manual_birdgbif_habitat.csv")
 birdgbif_checked <- read_csv("Data/bird_habitats/manual_birdgbif_habitat_filled.csv")
-birdgbif <- birdgbif %>% left_join(birdgbif_checked %>% dplyr::select(species, specieskey, habitat))
+
+birdgbif <- birdgbif %>% 
+  dplyr::select(-habitat) %>%
+  left_join(birdgbif_checked %>% dplyr::select(species, specieskey, habitat))
 
 
 # check whether species lack habitat data 
@@ -73,7 +84,7 @@ birdgbif %>% filter(is.na(habitat)) %>% dplyr::select(species, habitat)
 
 # add bird habitat data to checklist
 spgbif <- spgbif %>% 
-  left_join(birdgbif %>% select(c(species:isbird, habitat)) %>% distinct()) %>% 
+  left_join(birdgbif %>% dplyr::select(c(species:isbird, habitat)) %>% distinct()) %>% 
   rename(bird.habitat = habitat)
 
 
@@ -85,7 +96,7 @@ spgbif <- spgbif %>%
                          (isbird == "bird" & bird.habitat == "ocean"), "ocean", keep)) %>%
   mutate(keep = ifelse(isbird == "bird" & bird.habitat == "land_ocean", "both", keep))
 
-table(spgbif$keep, useNA = "always") #74 species missing data; 60 species were recorded as "both" 
+table(spgbif$keep, useNA = "always") #75 species missing data; 45 species were recorded as "both" 
 
 
 save(spgbif, file="Data/combined_checklists/spgbif_habitat.RDATA")

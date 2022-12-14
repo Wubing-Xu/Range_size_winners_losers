@@ -41,7 +41,7 @@ occ_rasid_examp <- occ_rasid %>%
 AOO <- ggplot() +
   geom_sf(data = land_behr, fill = "gray60", colour = "gray60", size = 0.2) + 
   geom_sf(data = shp100 %>% filter(ID %in% occ_rasid_examp$ras100id), fill = "red", colour = "red", size = 0.01) + 
-  labs(tag = "A", title  = "Area of occupancy (AOO): number of grid-cells") +
+  labs(tag = "a", title  = "Area of occupancy (AOO): number of grid-cells") +
   theme_classic() + 
   theme(plot.tag.position = c(0, 0.98),
         plot.title = element_text(size = 10, hjust = 0.05),
@@ -66,7 +66,7 @@ EOO <- ggplot() +
   geom_sf(data = land_behr, fill = "gray60", colour = "gray50", size = 0.2) + 
   geom_sf(data = ahull_examp, fill = "blue", colour = "blue", alpha = 1) + 
   geom_sf(data = occ_examp, colour = "red", alpha = 0.5, size = 0.01) + 
-  labs(tag = "B", title  = "Extent of occurrences (EOO): area of alpha hulls") +
+  labs(tag = "b", title  = "Extent of occurrences (EOO): area of alpha hulls") +
   theme_classic() + 
   theme(plot.tag.position = c(0, 0.98),
         plot.title = element_text(size = 10, hjust = 0.05),

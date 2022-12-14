@@ -59,32 +59,26 @@ btsplist <- btsplist %>% left_join(check.bird) %>%
   distinct()
 
 
+#### checklist of metacommunity-resurvey database
 
-#### checklist of biotic homogenization database
-
-load("data/Homogenization/homogenization_filtered.RDATA")
-
-# one dataset in the meta data have multiple taxon types in the same region. Name it as "multiple"
-bh_meta %>% distinct(dataset_id, regional, realm, taxon) %>% filter(duplicated(.[,c("dataset_id", "regional")]))
-bh_meta %>% distinct(dataset_id, realm, taxon) %>% filter(duplicated(.[,c("dataset_id")])) 
-bh_meta %>% distinct(dataset_id, regional, realm, taxon) %>% filter(dataset_id == "sorte_2018")
-# bh_meta <- bh_meta %>% mutate(taxon = ifelse(dataset_id == "sorte_2018", "multiple", taxon))
+load("data/Metacommunity_Resurvey/metacommunityResurvey_filtered.RDATA")
 
 # species list
-bh_species <- bh_filtered %>% distinct(dataset_id, species, realm, taxon)
+mr_species <- mr_filtered %>% distinct(dataset_id, species, realm, taxon)
 
 # check whether all species have realm and taxon information
-bh_species %>% filter(is.na(realm))
+mr_species %>% filter(is.na(realm))
 
 # add kingdom to species list
-unique(bh_species$taxon)
+unique(mr_species$taxon)
 taxon_kingdom <- data.frame(taxon = c("Fish", "Invertebrates", "Marine plants", "Herpetofauna",  "Birds", "Plants", "Mammals", "Multiple taxa"),
                             kingdom = c("Animalia", "Animalia", "Plantae", "Animalia", "Animalia", "Plantae", "Animalia", NA ))
 
-bh_species <- bh_species %>% left_join(taxon_kingdom)
+mr_species <- mr_species %>% left_join(taxon_kingdom)
+table(mr_species$kingdom, useNA = "always")
 
-# the prepared species list for biotic homogenization database
-bhsplist <- bh_species %>% 
+# the prepared species list for metacommunity-resurvey database
+mrsplist <- mr_species %>% 
   mutate(isbird = ifelse(taxon=="Birds","bird","notbird")) %>%
   dplyr::select(species, realm, taxon, isbird, kingdom) %>% 
   distinct()
@@ -107,7 +101,7 @@ itsplist <- it_filtered %>%
 
 
 ##combine checklist
-splist <- bind_rows(bhsplist, btsplist, ftsplist, itsplist) %>% distinct()
+splist <- bind_rows(mrsplist, btsplist, ftsplist, itsplist) %>% distinct()
 
 
 # update "isbird" for those species with inconsistent information of the same species 
@@ -179,7 +173,7 @@ splist <- splist %>% left_join(check.kingdom) %>%
 
 
 # the final splist
-splist <- distinct(splist, species, realm, isbird, kingdom)
+splist <- distinct(splist, species, realm, isbird, kingdom) # 27,527 rows
 
 
 
@@ -201,10 +195,10 @@ table(id)
 splist.gbif.all[id,"isbird"] <- ifelse(splist.gbif.all[id, "isbird"] == "bird","notbird", "bird")
 
 # the simplified species list with names in gbif backbone
-splist.gbif <- splist.gbif.all %>% select(c(input.species:input.kingdom, species, specieskey))
+splist.gbif <- splist.gbif.all %>% dplyr::select(c(input.species:input.kingdom, species, specieskey))
 
 splist.gbif.specieskey <- splist.gbif %>% filter(!is.na(specieskey)) %>% distinct(specieskey) %>% pull()
-length(splist.gbif.specieskey) # 17,747 species keys
+length(splist.gbif.specieskey) # 19,111 species keys
 
 
 # output

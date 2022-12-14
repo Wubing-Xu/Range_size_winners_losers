@@ -1,4 +1,4 @@
-## filter homogenization database (divided into metacommunity-resurvey and checklist-change) 
+## filter metacommunity-resurvey dataset
 ## to choose subsets of datasets with number of locations in each year >=4, duration >=10, 
 ## and matching locations across years to keep locations in similar configuration across years
 
@@ -10,74 +10,97 @@ library(raster)
 library(vegan)
 library(reshape2)
 
-bh <- read_csv("data/Homogenization/communities.csv")
-bh_meta <- read_csv("data/Homogenization/metadata.csv")
+mr <- read_csv("data/Metacommunity_Resurvey/metacommunity-survey-communities.csv")
+mr_meta <- read_csv("data/Metacommunity_Resurvey/metacommunity-survey-metadata.csv")
+mr_species <- read_csv("data/Metacommunity_Resurvey/manual_community_species_filled_20221003.csv")
 
-## only choose the meta-community resurveys; remove the datasets based on checklist
-bh_meta <- bh_meta %>% filter(study_type != "checklist")
-bh <- bh %>% filter(dataset_id %in% bh_meta$dataset_id)
-
-# when column "species" is empty, fill it with "species_original"
-bh <- bh %>% 
-  mutate(species = ifelse(is.na(species), species_original, species)) %>%
-  dplyr::select(-gbif_specieskey)
+mr <- mr %>% dplyr::select(dataset_id, regional, local,  year, species, species_original, value, metric, unit)
 
 
-# for dataset magalhaes_2020: the baseline survey of 5 sites were performed at 4 years. Use the average year to replace it.
-bh %>% filter(dataset_id == "magalhaes_2020") %>% distinct(regional, local, year)
-id <- bh$dataset_id == "magalhaes_2020" & bh$year %in% c(2003:2006)
-bh$year[id] <- 2005
+#########
+# correct some errors
 
-bh_meta %>% filter(dataset_id == "magalhaes_2020") %>% distinct(regional, local, year)
-id <- bh_meta$dataset_id == "magalhaes_2020" & bh_meta$year %in% c(2003:2006)
-bh_meta$year[id] <- 2005
+## use the manually checked species names to replace the raw one
+mr <- mr %>% left_join(mr_species %>% distinct(dataset_id, species_original, species.new))
+# all species are matched
+ mr %>% filter(is.na(species.new)) %>% distinct(dataset_id, species, species_original, species.new)
+
+mr <- mr %>%
+  mutate(species = ifelse(is.na(species.new), species, species.new)) %>%
+  dplyr::select(- species.new)
+
+
+# magalhaes_2020: the baseline survey of 5 sites were performed at 4 years. Use the average year to replace it.
+mr %>% filter(dataset_id == "magalhaes_2020") %>% distinct(regional, local, year)
+id <- mr$dataset_id == "magalhaes_2020" & mr$year %in% c(2003:2006)
+mr$year[id] <- 2005
+
+id <- mr_meta$dataset_id == "magalhaes_2020" & mr_meta$year %in% c(2003:2006)
+mr_meta$year[id] <- 2005
+
+# anderson_2019b: the extent is missing; add it manually
+id <- mr_meta$dataset_id == "anderson_2019b"
+mr_meta$gamma_bounding_box_km2[id] <- 1.73
+
+# christensen_2021: the extent seems incorrect; use the estimates from data description
+id <- mr_meta$dataset_id == "christensen_2021"
+mr_meta$gamma_bounding_box_km2[id] <- 782
+
+
+# szydlowski_2022_snails: the extent is missing
+id <- mr_meta$dataset_id == "szydlowski_2022_snails"
+mr_meta$gamma_bounding_box_km2[id] <- 2640
+
 
 # self_define studyID for combining with other database 
-bh <- bh %>% unite(col = study_name, dataset_id, regional, sep="_",remove=FALSE)
+mr <- mr %>% unite(col = study_name, dataset_id, regional, sep="_",remove=FALSE)
 
-bh_meta <- bh_meta %>% 
+mr_meta <- mr_meta %>% 
   unite(col = study_name, dataset_id, regional, sep="_", remove=FALSE) %>%
   mutate(studyID = factor(study_name, labels = paste0("sfd_", 1:n_distinct(study_name))),
          studyID =as.character(studyID)) %>%
   relocate(studyID)
 
-# check whether study_name can not be matched between main data and meta
-bh %>%
-  filter(!study_name %in% bh_meta$study_name) %>%
+# check whether study_name can not be matched between main data and meta data
+mr %>%
+  filter(!study_name %in% mr_meta$study_name) %>%
   distinct(study_name)
 
-bh_meta %>% filter(!study_name %in% bh$study_name) %>%
+mr_meta %>% filter(!study_name %in% mr$study_name) %>%
   distinct(study_name)
 
 # check whether some datasets have multiple taxon types and reams in the same region 
-bh_meta %>% distinct(dataset_id, regional, realm, taxon) %>% filter(duplicated(.[,c("dataset_id", "regional")]))
-bh_meta %>% distinct(dataset_id, realm, taxon) %>% filter(duplicated(.[,c("dataset_id")])) 
+mr_meta %>% distinct(dataset_id, regional, realm, taxon) %>% filter(duplicated(.[,c("dataset_id", "regional")]))
+mr_meta %>% distinct(dataset_id, realm, taxon) %>% filter(duplicated(.[,c("dataset_id")])) 
 
 # check where some samples have duplicated information in the metadata
-bh_meta %>% distinct() %>% filter(duplicated(.[,c("dataset_id","year", "regional" ,"local")])) 
-bh_meta %>% distinct() %>% filter(duplicated(.[,c("dataset_id","year", "regional" ,"local")]))  %>% distinct(dataset_id)
+mr_meta %>% distinct() %>% filter(duplicated(.[,c("dataset_id","year", "regional" ,"local")])) 
+mr_meta %>% distinct() %>% filter(duplicated(.[,c("dataset_id","year", "regional" ,"local")]))  %>% distinct(dataset_id)
 
 
 # combine community and meta data
-bh <- bh %>% left_join(bh_meta %>% dplyr::select(-c(period)) %>% distinct(), 
+mr <- mr %>% left_join(mr_meta %>% 
+                         dplyr::select(-c(data_pooled_by_authors, data_pooled_by_authors_comment, sampling_years, alpha_grain_comment,
+                                          gamma_bounding_box_comment,  gamma_sum_grains_comment, comment, comment_standardisation)) %>% 
+                         distinct(), 
                        by =c("study_name", "dataset_id", "year", "regional", "local")) %>%
   relocate(studyID)
 
 
 # remove studies that have been included in other database
-bh_meta <- bh_meta %>%
+mr_meta <- mr_meta %>%
   # remove three studies that have included in InsectChange
   # valtonen_2018 = Hungary moths;  schuch_2011 = Germany Marchand Schuch, magnuson_2020 = LTER NTL Macroinvertebrates
   # the study "willig_2010" has been included in BioTIME (StudyID = 54), but BioTIME doesn't provide coordinates or plotID for this study. keep it here 
   filter(! dataset_id %in% c("valtonen_2018", "schuch_2011", "magnuson_2020")) 
 
-bh <- bh %>% 
-  filter(dataset_id %in% bh_meta$dataset_id) %>%
+mr <- mr %>% 
+  filter(dataset_id %in% mr_meta$dataset_id) %>%
   rename(sample = local)
 
 
 # remove studies with few sites and short duration
-bh_4loc <- bh %>%
+mr_4loc <- mr %>%
   group_by(studyID, year) %>%
   mutate(n_samp = n_distinct(sample)) %>%
   filter(n_samp > 3) %>%
@@ -93,7 +116,7 @@ bh_4loc <- bh %>%
 # match sites across years based on grid-cells to keep similar configurations of sites
 
 # Calculate minimum, maximum latitude and longitude, and spans of longitude and longitude
-meta_spat <- bh_4loc %>% 
+meta_spat <- mr_4loc %>% 
   distinct(studyID, sample, year, latitude, longitude) %>%
   group_by(studyID) %>%
   mutate(min_latitude =  min(latitude),
@@ -123,13 +146,13 @@ ras <- raster(xmn = study_spat[1, 2] - res, xmx = study_spat[1, 3] + res,
               resolution = res)
 values(ras) <- 1:length(ras)
 plot(ras)
-points(bh_4loc %>% 
+points(mr_4loc %>% 
          distinct(studyID, sample, latitude, longitude) %>% 
          filter(studyID == study_spat[1, 1]) %>% dplyr::select(longitude, latitude))
 
 
 # add cells for each study. cells are only comparable within studies
-bh_4loc <- bh_4loc %>% mutate(cell = NA)
+mr_4loc <- mr_4loc %>% mutate(cell = NA)
 for(i in 1:nrow(meta_spat)){
   study_spat <- meta_spat[i, c("studyID", "min_longitude", "max_longitude", "min_latitude", "max_latitude", "span_longitude", "span_latitude")] %>% as.data.frame()
   
@@ -140,24 +163,24 @@ for(i in 1:nrow(meta_spat)){
                   ymn = study_spat[1, 4] - res, ymx = study_spat[1, 5] + res, 
                   resolution = res)
     values(ras) <- 1:length(ras)
-    id <- bh_4loc$studyID == study_spat[1, 1]
-    bh_4loc$cell[id] <- cellFromXY(ras, bh_4loc[id, c("longitude", "latitude")] %>% as.data.frame())
+    id <- mr_4loc$studyID == study_spat[1, 1]
+    mr_4loc$cell[id] <- cellFromXY(ras, mr_4loc[id, c("longitude", "latitude")] %>% as.data.frame())
   }
   
   #  studies with no coordinates or only with regional central coordinates. Use the identities of plots as the cells 
   if(study_spat$span_longitude == 0){
-    id <- bh_4loc$studyID == study_spat[1, 1]
-    bh_4loc$cell[id] <- bh_4loc$sample[id]
+    id <- mr_4loc$studyID == study_spat[1, 1]
+    mr_4loc$cell[id] <- mr_4loc$sample[id]
   }
 }
 
 
 # filter the dataset to remove rare cells and years with small extent
-bh_4loc_filtered <- NULL
-bh_years_max_loc <- NULL
+mr_4loc_filtered <- NULL
+mr_years_max_loc <- NULL
 for(i in 1:nrow(meta_spat)){
   # perform loop for each study
-  study <- bh_4loc %>% 
+  study <- mr_4loc %>% 
     filter(studyID == meta_spat$studyID[i])
   
   # calculate number of locations in each cell of each year: rows are years, columns are cells, elements are number of locations
@@ -222,8 +245,8 @@ for(i in 1:nrow(meta_spat)){
   rare_study <- study %>% 
     filter(cell %in% colnames(year_cell) & year %in% rownames(year_cell))
   
-  bh_years_max_loc <- bind_rows(bh_years_max_loc , bind_cols(studyID = meta_spat$studyID[i], max_co_loc[1, ]))
-  bh_4loc_filtered  <- bind_rows(bh_4loc_filtered, rare_study)
+  mr_years_max_loc <- bind_rows(mr_years_max_loc , bind_cols(studyID = meta_spat$studyID[i], max_co_loc[1, ]))
+  mr_4loc_filtered  <- bind_rows(mr_4loc_filtered, rare_study)
 }
 
 ggplot(data = rare_study, aes(longitude, latitude)) + 
@@ -234,7 +257,7 @@ ggplot(data = rare_study, aes(longitude, latitude)) +
 
 # keep only years with at least 4 samples,
 # and keep studies with at least 2 time points and duration >10 years
-bh_4loc_filtered <- bh_4loc_filtered %>%
+mr_4loc_filtered <- mr_4loc_filtered %>%
   group_by(studyID, year) %>%
   mutate(n_samp = n_distinct(sample)) %>%
   filter(n_samp > 3) %>%
@@ -248,26 +271,26 @@ bh_4loc_filtered <- bh_4loc_filtered %>%
 
 
 # check how many studies and their attributes
-bh_studies <- bh_4loc_filtered %>% distinct(studyID, all_samp, min_samp, n_years, duration) #55 studies
-table(bh_studies$all_samp)
-table(bh_studies$min_samp) # 34 studies >= 10
-table(bh_studies$n_years)  # 22 studies with n_years =2, 10 studies >= 10
-table(bh_studies$duration)
+mr_studies <- mr_4loc_filtered %>% distinct(studyID, all_samp, min_samp, n_years, duration) #97 studies
+table(mr_studies$all_samp)
+table(mr_studies$min_samp) # 57 studies >= 10
+table(mr_studies$n_years)  # 25 studies with n_years =2, 28 studies >= 10
+table(mr_studies$duration)
 
 # save the filtered data
-bh_filtered <- bh_4loc_filtered %>% dplyr::select(-(n_samp:duration)) 
-save(bh_filtered, file = "data/Homogenization/homogenization_filtered.RDATA")
+mr_filtered <- mr_4loc_filtered %>% dplyr::select(-(n_samp:duration)) 
+save(mr_filtered, file = "data/Metacommunity_Resurvey/metacommunityResurvey_filtered.RDATA")
 
 
 
 # locations of the filtered dataset
-bh_loc_filtered <- bh_4loc_filtered %>% 
+mr_loc_filtered <- mr_4loc_filtered %>% 
   distinct(studyID, sample, year, latitude, longitude)
 
 # locations of the full dataset
-bh_loc <- bh_4loc %>% 
+mr_loc <- mr_4loc %>% 
   distinct(studyID, sample, year, latitude, longitude) %>% 
-  left_join(bh_loc_filtered %>%
+  left_join(mr_loc_filtered %>%
               mutate(keep = "yes")) %>%
   mutate(keep = ifelse(is.na(keep), "no", keep)) %>% 
   group_by(studyID) %>%
@@ -277,10 +300,10 @@ bh_loc <- bh_4loc %>%
 
 
 # plot distributions of samples and indicate which records will be removed
-pdf('data/Homogenization/homogenization_4locations_filtered.pdf', width = 12, height = 10)
-id_study <- unique(bh_loc$studyID)
+pdf('data/Metacommunity_Resurvey/metacommunityResurvey_filtered.pdf', width = 12, height = 10)
+id_study <- unique(mr_loc$studyID)
 for(i in 1:length(id_study)){
-  study <- bh_loc %>% 
+  study <- mr_loc %>% 
     filter(studyID %in% id_study[i])
   
   p <- ggplot(data = study, aes(longitude, latitude)) + 

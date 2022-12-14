@@ -1,14 +1,15 @@
 # download occurrences, and then clean occurrence
 # I submit array jobs in HPC and save clean occurrences for each individual job
 
-
 #install and load packages
-packages <- c("tidyverse","dplyr","CoordinateCleaner","rnaturalearth","rgeos","rgbif")
+packages <- c("tidyverse","dplyr","CoordinateCleaner","rnaturalearth","rgbif","sp","rgeos","rgdal","raster")
 
 for(x in packages){
-    if(!require(x,character.only=TRUE, lib.loc = "/gpfs0/home/wubing/R/library")){
-		install.packages(x, repos = "http://cran.us.r-project.org", lib="/gpfs0/home/wubing/R/library", dependencies = TRUE)
-		require(x,character.only=TRUE, lib.loc = "/gpfs0/home/wubing/R/library")
+  if(!require(x, character.only=TRUE)){
+    if(!require(x,character.only=TRUE, lib.loc = "/gpfs0/home/wubing/R/library_2020b")){
+      install.packages(x, repos = "http://cran.us.r-project.org", lib.loc = "/gpfs0/home/wubing/R/library_2020b", dependencies = TRUE)
+      require(x, character.only = TRUE, lib.loc = "/gpfs0/home/wubing/R/library_2020b")					
+    }
   }
 }
 
@@ -18,14 +19,14 @@ setwd(path2wd)
 
 # gbif account 
 user <- "wubing" # gbif.org username 
-pwd <- "xxxxxxxxxx" # gbif.org password
-email <- "wbingxu@gmail.com" # email
+pwd <- "ok15920301377" # gbif.org password
+email <- "wbingxu@gmail.com" # email 
 
 # path directory for store gbif occurrences
 path_gbif <- "data/gbif/distribution_records"
 
 # species list and land/ocean boundary
-load("data/gbif/data_to_get_occurrences_20220205.RDATA")
+load("data/gbif/data_to_get_occurrences.RDATA")
 
 # download keys
 ## get task id from array jobs submitted in HPC cluster 
@@ -104,24 +105,13 @@ occ <- occ %>%
   clean_coordinates(tests = c("capitals","centroids","equal","institutions","zeros"), 
                     capitals_rad = 1000, centroids_detail = "country", value = "clean") %>%
   mutate(dplyr::across(c(decimallatitude, decimallongitude), round,2)) %>%
-  dplyr::select(specieskey, species, decimallongitude, decimallatitude, year)
+  dplyr::select(specieskey, species, decimallongitude, decimallatitude)
 
 spsuma <- spsuma %>% left_join(occ %>% count(specieskey) %>% rename(n_clean = n))  
 
-
-# add period for each occurrences (a species in a location) as 1 if data were sampled before 2000, and as 2 if after 2000, 
-# and as 3 (1+2) if both before and after 2000
-# and remove duplicates
-occ <- occ %>% 
-  mutate(period = ifelse(year>2000 | is.na(year), 2, 1)) %>%
-  dplyr::select(-year) %>% 
-  distinct() %>%
-  group_by(specieskey, decimallongitude, decimallatitude) %>% 
-  mutate(period = sum(period)) %>% 
-  ungroup() %>%
-  distinct()
-
-spsuma <- spsuma %>% left_join(occ %>% count(specieskey) %>% rename(n_nodupl = n))  
+#remove duplicates
+occ <- distinct(occ)
+spsuma <- spsuma %>% left_join(occ %>% count(specieskey) %>% rename(n_nodupl = n))
 
 # flag records in land sing buffered land boundary
 occ$inland <- cc_sea(occ, ref = buffland, value = "flagged")
@@ -129,20 +119,24 @@ occ$inland <- cc_sea(occ, ref = buffland, value = "flagged")
 occ$inocean <- cc_sea(occ, ref = buffocean, value = "flagged")
 
 # number of records in buffered land and ocean
-spsuma_temp <- occ %>% count(specieskey, inland) %>% filter(inland) %>% select(specieskey, n_land = n)
+spsuma_temp <- occ %>% count(specieskey, inland) %>% filter(inland) %>% dplyr::select(specieskey, n_land = n)
 spsuma <- spsuma %>% left_join(spsuma_temp)
-spsuma_temp <- occ %>% count(specieskey, inocean) %>% filter(inocean) %>% select(specieskey, n_ocean = n)
+spsuma_temp <- occ %>% count(specieskey, inocean) %>% filter(inocean) %>% dplyr::select(specieskey, n_ocean = n)
 spsuma <- spsuma %>% left_join(spsuma_temp)
-
-# remove records in sea for land species and remove records in land for sea species
-occ <- occ %>% filter(!(!inland & specieskey %in% pull(spsuma[spsuma$keep == "land",], specieskey))) %>%
-  filter(!(!inocean & specieskey %in% pull(spsuma[spsuma$keep == "ocean",], specieskey)))
-spsuma <- spsuma %>% left_join(occ %>% count(specieskey) %>% rename(n_final = n)) 
 
 # some species have no information of land or sea habitats.
 #If 95%> records in one habitat and more than in the other habitat, we assume it as the main habitat
 spsuma <- spsuma %>% 
-  mutate(keep_new = ifelse(n_land/n_nodupl > 0.95 & n_land > n_ocean & is.na(keep) ,"land", keep)) %>%
-  mutate(keep_new = ifelse(n_ocean/n_nodupl > 0.95 & n_ocean > n_land & is.na(keep_new) ,"ocean", keep_new))
+  mutate(keep_new = ifelse(n_land/n_nodupl > 0.95  & n_land > n_ocean & is.na(keep) ,"land", keep)) %>%
+  mutate(keep_new = ifelse(n_ocean/n_nodupl > 0.95 & n_ocean > n_land & is.na(keep_new) ,"ocean", keep_new)) %>%
+  relocate(keep_new, .after = keep)
+ 
+# remove records in sea for land species and remove records in land for sea species
+occ <- occ %>% 
+  filter(!(!inland & specieskey %in% pull(spsuma[spsuma$keep_new == "land",], specieskey))) %>%
+  filter(!(!inocean & specieskey %in% pull(spsuma[spsuma$keep_new == "ocean",], specieskey)))
+
+spsuma <- spsuma %>% left_join(occ %>% count(specieskey) %>% rename(n_final = n))
+
 
 save(occ, spsuma, file = paste(path_gbif, paste0("occ_", key, ".RDATA"),sep="/"))

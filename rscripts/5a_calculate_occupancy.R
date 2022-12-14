@@ -9,13 +9,13 @@ rm(list = ls())
 user <- Sys.info()["nodename"]
 path2wd <- switch(user,
                   "IDIVNB341" = "C:/Dropbox/iDiv/homogenization_occupancy",
-                  "IDIVTS02" = "D:/ya90meri/homogenization_occupancy")
+                  "IDIVTS01" = "H:/wubing/iDiv/homogenization_occupancy")
 setwd(path2wd)
 
 library(tidyverse)
 
 
-load("data/Combined_assemblages_20220208.RDATA")
+load("data/Combined_assemblages.RDATA")
 load("data/Species_rangesize.RDATA")
 
 
@@ -259,7 +259,7 @@ occupancy_change_2yr <- occupancy_2yr_nest %>%
   dplyr::select(-data) %>%
   bind_cols(occupancy_change_2yr) %>% 
   left_join(dat %>% distinct(specieskey, nocc_community, nocc_gbif, ratio_nocc_gbif), by = c("specieskey")) %>%
-  left_join(spsuma[,c(2,14:19)], by = c("specieskey")) %>%
+  left_join(spsuma[,c(2,14:17)], by = c("specieskey")) %>%
   filter(dynamic != "absent")
 
 table(occupancy_change_2yr[, c("dynamic", "database")])
@@ -283,7 +283,7 @@ occupancy_change_period <- occupancy_period_nest %>%
   dplyr::select(-data) %>%
   bind_cols(occupancy_change_period) %>% 
   left_join(dat %>% distinct(specieskey, nocc_community, nocc_gbif, ratio_nocc_gbif), by = c("specieskey")) %>%
-  left_join(spsuma[,c(2,14:19)], by = c("specieskey")) %>%
+  left_join(spsuma[,c(2,14:17)], by = c("specieskey")) %>%
   filter(dynamic != "absent")
 
 table(occupancy_change_period[, c("dynamic", "database")])
@@ -291,7 +291,8 @@ table(occupancy_change_period[, c("dynamic", "database")])
 
 # save occupancy 
 save(occupancy_2yr, occupancy_period, occupancy_change_2yr, occupancy_change_period, years_period, dat_meta, 
-     file = "intermediate_results/occuapncy.RDATA")
+     file = "intermediate_results/occupancy.RDATA")
+
 
 
 
@@ -353,5 +354,5 @@ occupancy_change_resample <- occupancy_change_resample %>%
   left_join(spsuma[,c(2, 14)], by = "specieskey")
 
 
-save(occupancy_change_resample, dat_meta, file = "intermediate_results/occuapncy_resample.RDATA")
+save(occupancy_change_resample, dat_meta, file = "intermediate_results/occupancy_resample.RDATA")
 

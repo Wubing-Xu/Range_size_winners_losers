@@ -17,8 +17,6 @@ load("data/Role_insects/mosquito_enc_standardized.RDATA")
 
 # to combine these new studies with the main insect studies, change the column names
 mosquito_enc_std <- mosquito_enc_std %>% 
-  # the self_defined Datasource_ID
-  mutate(Datasource_ID = factor(study, labels = paste0("sfd_", 1:n_distinct(study)))) %>%
   rename(Datasource_name = study, Plot_ID = plot, Latitude = Latitudes, Longitude = Longitudes, 
          Year = year, species = Species, Reference = Citations, Datasource_nameREDUNDANT = Tag , Number = N, Realm = realm) %>%
   mutate(Abundance.Biomass = "A") %>%
@@ -215,7 +213,7 @@ it_4loc_filtered <- it_4loc_filtered %>%
   filter(n_years >= 2 & duration >= 10)
 
 # check how many studies and their attributes
-it_studies <- it_4loc_filtered %>% distinct(Datasource_ID, all_samp, min_samp, n_years, duration) # 22 studies
+it_studies <- it_4loc_filtered %>% distinct(Datasource_ID, all_samp, min_samp, n_years, duration) # 23 studies
 table(it_studies$all_samp)
 table(it_studies$min_samp)
 table(it_studies$n_years)  

@@ -25,7 +25,7 @@ sapply(needed_libs, usePackage)
 rm(usePackage)
 
 
-load("data/Homogenization/homogenization_filtered.RDATA")
+load("data/Metacommunity_Resurvey/MetacommunityResurvey_filtered.RDATA")
 load("data/BioTIME/BioTIME_4locations_10years_filtered_final.RDATA")
 load("data/RivFishTIME/RivFishTIME_4sites_10years_filtered.RDATA")
 load("data/Role_insects/inset_metacommunities_filtered.RDATA")
@@ -181,10 +181,10 @@ bt %>% filter(STUDY_ID %in% bt_studies_taxon_benthos) %>% distinct(STUDY_ID, TAX
 
 
 ##########
-# homogenization data (divided and renamed as metacommunity resurvey and checklist)
+# metacommunity resurvey data
 
 #  update species with GBIF names and indicate whether estimates of range size were calculated
-bh <- bh_filtered %>% 
+mr <- mr_filtered %>% 
   rename(input_species = species) %>%
   left_join(splist.gbif %>% dplyr::select(input.species, species, specieskey), by = c("input_species" = "input.species")) %>% 
   mutate(species = ifelse(is.na(species), input_species, species)) %>%
@@ -197,7 +197,7 @@ bh <- bh_filtered %>%
 ## prepare the dataset used to calculate occupancy
 # select the needed columns and calculate number of samples and duration
 # choose years with at least 4 samples, studies with >=2 years, and duration > 10 years,
-bh_input <- bh %>% 
+mr_input <- mr %>% 
   dplyr::select(studyID, year, sample, species, specieskey, has_range, latitude, longitude) %>% 
   distinct() %>%
   group_by(studyID, year) %>%
@@ -213,18 +213,17 @@ bh_input <- bh %>%
 
 
 # check how many studies and their attributes
-bh_studies <- bh_input %>% distinct(studyID, all_samp, min_samp, n_years, duration) #55 studies
-table(bh_studies$all_samp)
-table(bh_studies$min_samp) # 34 studies >= 10
-table(bh_studies$n_years)  # 22 studies with n_years =2, 10 studies >= 10
-table(bh_studies$duration)
+mr_studies <- mr_input %>% distinct(studyID, all_samp, min_samp, n_years, duration) #97 studies
+table(mr_studies$all_samp)
+table(mr_studies$min_samp) # 57 studies >= 10
+table(mr_studies$n_years)  # 25 studies with n_years =2, 28 studies >= 10
+table(mr_studies$duration)
 
 
 #### meta data for selected studies from bh
-# 9 studies don't have coordinates 
-bh_input_meta <- bh %>% 
+mr_input_meta <- mr %>% 
   unite(col = event, studyID, year, sample, remove=FALSE) %>%
-  filter(event %in% (bh_input %>%  unite(col = event, studyID, year, sample) %>% pull(event))) %>%
+  filter(event %in% (mr_input %>%  unite(col = event, studyID, year, sample) %>% pull(event))) %>%
   distinct(studyID, study_name, dataset_id, sample, latitude, longitude, realm, taxon, 
            alpha_grain_m2, gamma_extent_km2 = gamma_bounding_box_km2, alpha_grain_type, gamma_extent_type = gamma_bounding_box_type) %>% 
   distinct(studyID, sample, .keep_all =TRUE) %>%
@@ -239,12 +238,12 @@ bh_input_meta <- bh %>%
 
 
 # no studies with longitudinal spans >180
-bh_input_meta %>% filter(max_long -min_long > 180) %>% distinct(studyID)
+mr_input_meta %>% filter(max_long -min_long > 180) %>% distinct(studyID)
 
 
 ## Calculate the area of samples within studies
 # the spatial points
-bh_input_extent <- bh_input_meta %>% 
+mr_input_extent <- mr_input_meta %>% 
   distinct(studyID, latitude , longitude, min_long, max_long) %>%
   # update longitude for several studies spanning 180 degree
   mutate(long.new = ifelse((max_long - min_long) > 180 & 
@@ -260,53 +259,45 @@ bh_input_extent <- bh_input_meta %>%
   summarise(geometry = st_combine(geometry))
 
 # areas are defined with convex hull
-bh_input_area <- bh_input_extent %>% 
+mr_input_area <- mr_input_extent %>% 
   st_convex_hull() %>% 
   st_area() %>%
   as.numeric()
-bh_input_area <-bind_cols(studyID = bh_input_extent$studyID, area = round(bh_input_area/10^6,1)) #the unit of area is km2
+mr_input_area <-bind_cols(studyID = mr_input_extent$studyID, area = round(mr_input_area/10^6,1)) #the unit of area is km2
 
 # add gamma extent from raw meta data for studies missing values
-bh_input_area_inmeta <- bh_input_meta %>% 
+mr_input_area_inmeta <- mr_input_meta %>% 
   group_by(studyID, study_name) %>% 
   summarise(mean_grain_m2 = mean(alpha_grain_m2, na.rm=TRUE),
             sd_grain_m2 = sd(alpha_grain_m2, na.rm=TRUE),
             extent_km2 = mean(gamma_extent_km2, na.rm=TRUE))
-bh_input_area <- full_join(bh_input_area, bh_input_area_inmeta)
+mr_input_area <- full_join(mr_input_area, mr_input_area_inmeta)
 
 # Because many studies didn't provide coordinates and thus can't calculated area based on locations, use the extent provided by database
-bh_input_area <- bh_input_area %>% 
+table(mr_input_area$area == 0) #31 FALSE, 66 TRUE
+mr_input_area <- mr_input_area %>% 
   dplyr::select(-area)
 
-# two studies have no extent. Find the extents manually
-bh_input_area %>% filter(is.na(extent_km2))
-
-# the area of Jornada Experimental Range: 302 km2;area of Wizard Islet: 1.73 hectares
-bh_input_area_manul <- data.frame(study_name = c("christensen_2021_Jornada Experimental Range, USA", "anderson_2019b_Wizard"),
-                                  extent_km2 = c(302, 0.0173))
-id <- match(bh_input_area_manul[, "study_name"], pull(bh_input_area, study_name))
-bh_input_area[id[!is.na(id)],c("extent_km2")] <- bh_input_area_manul[!is.na(id), c("extent_km2")]
-
+# all studies have  extent.
+mr_input_area %>% filter(is.na(extent_km2))
 
 # the start and end years of studies
-bh_input_year <- bh_input %>% 
+mr_input_year <- mr_input %>% 
   group_by(studyID) %>% 
   summarise(start_year = min(year),
             end_year = max(year),
             n_years = n_distinct(year),
             duration = end_year - start_year + 1)
 
-
 # combined meta data with area and start and end years
-bh_input_meta <- bh_input_meta %>% 
+mr_input_meta <- mr_input_meta %>% 
   dplyr::select(studyID, study_name, dataset_id, taxon, realm, min_lat, max_lat, min_long, max_long, cent_lat, cent_long) %>%
   distinct() %>%
-  inner_join(bh_input_area) %>%
-  inner_join(bh_input_year)
-
+  inner_join(mr_input_area) %>%
+  inner_join(mr_input_year)
 
 # check whether some studies have no central coordinates
-bh_input_meta %>% 
+mr_input_meta %>% 
   filter(is.na(cent_lat) | is.na(cent_long)) %>% 
   distinct( studyID, study_name, dataset_id)
 
@@ -443,7 +434,7 @@ it_input <- it %>% dplyr::select(Datasource_ID, Year, Plot_ID, species, speciesk
   filter(n_years >= 2 & duration >= 10)
 
 # check how many studies and their attributes
-it_studies <- it_input %>% distinct(studyID, all_samp, min_samp, n_years, duration) # 22 studies
+it_studies <- it_input %>% distinct(studyID, all_samp, min_samp, n_years, duration) # 23 studies
 table(it_studies$all_samp)
 table(it_studies$min_samp)
 table(it_studies$n_years)
@@ -531,7 +522,7 @@ dat <- bind_rows(
   bt_input %>% mutate(database = "bt", studyID = as.character(studyID)),
   ft_input %>% mutate(database = "ft", studyID = as.character(studyID)),
   it_input %>% mutate(database = "ic", studyID = as.character(studyID), sample = as.character(sample)),
-  bh_input %>% mutate(database = "mr", studyID = as.character(studyID)),
+  mr_input %>% mutate(database = "mr", studyID = as.character(studyID)),
   ) %>%
   unite(col = "study", database, studyID, remove = FALSE) %>% 
   relocate(database, .before = studyID)
@@ -548,7 +539,7 @@ dat_meta <- bind_rows(
   it_input_meta %>% 
     mutate(database = "ic",
            studyID = as.character(studyID)),
-   bh_input_meta %>% 
+   mr_input_meta %>% 
     mutate(database = "mr",
            studyID = as.character(studyID)), 
   ) %>%
@@ -573,15 +564,15 @@ data_meta_sprich <- dat %>%
             sprich_range = n_distinct(species[has_range == "yes"]),
             Psprich_range = round(sprich_range/sprich, 4))
 
-# 16 studies have < 10 species with estimates of range size
+# 25studies have < 10 species with estimates of range size
 data_meta_sprich %>% filter(sprich_range < 10)
 
 
-#  total number of species: 23,879 species 
+#  total number of species: 25,607 species 
 dat %>% distinct(species) %>% nrow() 
-# number of species that are matched to GBIF backbone: 17,746
+# number of species that are matched to GBIF backbone: 19,110
 dat %>% filter(species %in% splist.gbif$species) %>% distinct(species) %>% nrow()
-# number of species that have estimates of range size: 17,568
+# number of species that have estimates of range size: 18,914
 dat %>% filter(has_range == "yes") %>% distinct(species) %>% nrow() 
 
 
@@ -620,7 +611,7 @@ nocc_species <- nocc_species %>%
   inner_join(spsuma %>% dplyr::select(specieskey, nocc_gbif = n_final)) %>%
   mutate(ratio_nocc_gbif = round(nocc_gbif/nocc_community, 2))
 
-table(nocc_species$ratio_nocc_gbif < 1) # FALSE: 16518, TRUE: 851
+table(nocc_species$ratio_nocc_gbif < 1) # FALSE: 17880, TRUE: 835
 
 # combine community data with number of occurrences
 dat <- dat %>% 
@@ -680,18 +671,18 @@ table(dat_meta[,c("realm", "database")])
 table(dat_meta[,c("climate", "database")])
 table(dat_meta[,c("taxon_new", "realm")])
 table(dat_meta[,c("taxon_new", "realm", "database")])
-table(dat_meta$n_years == 2) # 31 studies vs. 173
-table(dat_meta$n_years < 10) # 95 studies vs. 109
+table(dat_meta$n_years == 2) # 34 studies vs. 204
+table(dat_meta$n_years < 10) # 112 studies vs. 126
 
 
 # found some errors on the central latitudes; update them manually  
-cent_coords_manul <- data.frame(study = c("bt_187", "bt_97", "mr_sfd_104"),
-                                cent_long = c(-75, 176.667, 13.47999954),
-                                cent_lat = c(37, 72.81345, 42.00999832))
+cent_coords_manul <- data.frame(study = c("bt_187", "bt_97"),
+                                cent_long = c(-75, 176.667),
+                                cent_lat = c(37, 72.81345))
 id <- match(cent_coords_manul[, "study"], pull(dat_meta, study))
 dat_meta[id, c("cent_lat")] <- cent_coords_manul[, c("cent_lat")]
 dat_meta[id, c("cent_long")] <- cent_coords_manul[, c("cent_long")]
 
 
 save(dat, dat_meta,
-     file = "data/Combined_assemblages_20220208.RDATA")
+     file = "data/Combined_assemblages.RDATA")
