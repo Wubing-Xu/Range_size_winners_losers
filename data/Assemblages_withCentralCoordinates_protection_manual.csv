@@ -1,36 +1,44 @@
-"","study","nsamp_total","ncoord_total","coordinate_local","nsamp_inPA_bfstart","nsamp_inPA_bflate","nsamp_inPA_wdpa","psamp_inPA_bfstart","psamp_inPA_bflate","psamp_inPA_wdpa","start_year","start_late","study_name","realm","extent_km2"
-"1","ic_1367",6,1,FALSE,0,6,6,0,1,1,1980,2008,"Italy ground beetles","Terrestrial",10
-"2","ic_1408",23,1,FALSE,0,0,0,0,0,0,2000,2007,"Finland freshwater","Freshwater",350
-"3","mr_sfd_1",4,1,FALSE,0,0,0,0,0,0,1974,1999,"amesbury_1999_Gawel transects","Marine",4.054950134844
-"4","mr_sfd_10",13,1,FALSE,0,0,0,0,0,0,1981,2012,"beldade_2015_Mataiva","Marine",50
-"5","mr_sfd_100",43,1,FALSE,0,43,43,0,1,1,1995,2011,"santana_2017_SPA Castro Verde Low-intensity","Terrestrial",456.08
-"6","mr_sfd_104",256,1,FALSE,0,0,0,0,0,0,2007,2017,"sperandii_2020_Coastal dunes, Italy","Terrestrial",20
-"7","mr_sfd_111",29,1,FALSE,0,0,0,0,0,0,1957,2015,"vojik_2018_Klinec forest","Terrestrial",10
-"8","mr_sfd_113",39,1,FALSE,39,39,39,1,1,1,1992,2004,"willig_2010_Luquillo Forest Dynamics Plot (LFDP)","Terrestrial",0.16
-"9","mr_sfd_114",5,1,FALSE,0,0,5,0,0,1,2002,2011,"wright_2021_desert grassland","Terrestrial",0.6
-"10","mr_sfd_115",5,1,FALSE,0,0,5,0,0,1,2002,2011,"wright_2021_desert shrubland","Terrestrial",0.56
-"11","mr_sfd_116",5,1,FALSE,0,0,5,0,0,1,2002,2011,"wright_2021_plains grasslands","Terrestrial",0.64
-"12","mr_sfd_12",544,1,FALSE,0,0,0,0,0,0,1982,2012,"cazelles_2019_Ontario","Freshwater",1076395
-"13","mr_sfd_13",32,1,FALSE,0,0,0,0,0,0,1996,2009,"cervantes-yoshida_2015_Alameda Creek Watershed","Freshwater",1800
-"14","mr_sfd_15",80,1,FALSE,0,0,0,0,0,0,1927,1995,"christensen_2021_Jornada Experimental Range, USA","Terrestrial",302
-"15","mr_sfd_16",5,1,FALSE,0,5,5,0,1,1,1970,2015,"closset-kopp_2018_Compiegne Forest","Terrestrial",144.14
-"16","mr_sfd_17",136,1,FALSE,0,0,0,0,0,0,1998,2007,"countryside_survey_invertebrates_2017_England","Freshwater",130279
-"17","mr_sfd_18",161,1,FALSE,0,161,161,0,1,1,1990,2007,"countryside_survey_invertebrates_2017_Scotland","Freshwater",77933
-"18","mr_sfd_19",37,1,FALSE,0,0,0,0,0,0,1998,2007,"countryside_survey_invertebrates_2017_Wales","Freshwater",20779
-"19","mr_sfd_20",135,1,FALSE,0,0,0,0,0,0,1998,2007,"countryside_survey_macrophytes_2017_England","Freshwater",130279
-"20","mr_sfd_21",163,1,FALSE,0,163,163,0,1,1,1998,2007,"countryside_survey_macrophytes_2017_Scotland","Freshwater",77933
-"21","mr_sfd_22",35,1,FALSE,0,0,0,0,0,0,1998,2007,"countryside_survey_macrophytes_2017_Wales","Freshwater",20779
-"22","mr_sfd_23",286,1,FALSE,0,0,0,0,0,0,1990,2007,"countryside_survey_plants_2017_England","Terrestrial",130279
-"23","mr_sfd_24",185,1,FALSE,0,185,185,0,1,1,1990,2007,"countryside_survey_plants_2017_Scotland","Terrestrial",77933
-"24","mr_sfd_25",60,1,FALSE,0,0,0,0,0,0,1998,2007,"countryside_survey_plants_2017_Wales","Terrestrial",20779
-"25","mr_sfd_34",6,1,FALSE,0,0,6,0,0,1,1992,2010,"gibb_2019_Main Camp area of the Ethabuka Reserve","Terrestrial",314.159265358979
-"26","mr_sfd_36",6,1,FALSE,6,6,6,1,1,1,1974,2012,"green_2021_Vancouver Island, Canada","Marine",0.0012
-"27","mr_sfd_37",41,1,FALSE,0,0,0,0,0,0,1976,2001,"larkin_2015_Illinois","Terrestrial",37499.25
-"28","mr_sfd_49",5,1,FALSE,0,0,0,0,0,0,2003,2012,"muthukrishnan_2019_Becker","Freshwater",3393.97207496
-"29","mr_sfd_7",5,1,FALSE,0,0,0,0,0,0,1997,2007,"anderson_2019b_Wizard","Marine",0.0173
-"30","mr_sfd_8",66,1,FALSE,0,66,66,0,1,1,1975,1992,"arntzen_2017_Western Pas de Calais, France","Terrestrial",300
-"31","mr_sfd_80",4,1,FALSE,0,0,0,0,0,0,2003,2012,"muthukrishnan_2019_Otter Tail","Freshwater",5127.42514348
-"32","mr_sfd_95",6,1,FALSE,6,6,6,1,1,1,1999,2016,"myers-smith_2019_Herschel","Terrestrial",0.0025
-"33","mr_sfd_96",6,1,FALSE,6,6,6,1,1,1,1999,2016,"myers-smith_2019_Komakuk","Terrestrial",0.0025
-"34","mr_sfd_97",48,1,FALSE,0,0,0,0,0,0,2000,2915,"price_2017_Illinois","Terrestrial",149997
-"35","mr_sfd_99",24,1,FALSE,0,0,0,0,0,0,1995,2012,"santana_2017_SPA Castro Verde High-intensity","Terrestrial",423.92
+"","study","study_name","realm","nsamp_total","ncoord_total","coordinate_local","extent_km2","start_year","start_late","psamp_inPA_bfstart","psamp_inPA_bflate","psamp_inPA_wdpa","area_total","parea_inPA_wdpa","parea_inPA_bflate"
+"1","ic_1367","Italy ground beetles","Terrestrial",6,1,FALSE,10,1980,2008,0,1,1,NA,NA,NA
+"2","ic_1408","Finland freshwater","Freshwater",23,1,FALSE,350,2000,2007,0,0,0,NA,NA,NA
+"3","mr_sfd_131","muthukrishnan_2019_Otter Tail","Freshwater",4,1,FALSE,5127.42514348,2003,2012,0,0,0,NA,NA,NA
+"4","mr_sfd_156","myers-smith_2019_Herschel","Terrestrial",6,1,FALSE,0.0025,1999,2016,1,1,1,NA,NA,NA
+"5","mr_sfd_157","myers-smith_2019_Komakuk","Terrestrial",6,1,FALSE,0.0025,1999,2016,1,1,1,NA,NA,NA
+"6","mr_sfd_158","price_2017_Illinois","Terrestrial",48,1,FALSE,149997,2000,2010,0,0,0,NA,NA,NA
+"7","mr_sfd_169","santana_2017_SPA Castro Verde High-intensity","Terrestrial",24,1,FALSE,423.92,1995,2012,0,0,0,NA,NA,NA
+"8","mr_sfd_170","santana_2017_SPA Castro Verde Low-intensity","Terrestrial",43,1,FALSE,456.08,1995,2011,0,1,1,NA,NA,NA
+"9","mr_sfd_172","sonnier_2022_Buck Island Ranch","Terrestrial",40,1,FALSE,41.7,2006,2014,0,0,0,NA,NA,NA
+"10","mr_sfd_175","sperandii_2020_Coastal dunes, Italy","Terrestrial",256,1,FALSE,20,2007,2017,0,0,0,NA,NA,NA
+"11","mr_sfd_179","szydlowski_2022_snails_Vilas County, Wisconsin","Freshwater",6,1,FALSE,0,2011,2020,0,0,0,NA,NA,NA
+"12","mr_sfd_180","tanner_2022_North Crest, Heron Island","Marine",4,1,FALSE,0.0834689752132272,1963,1999,0,1,1,NA,NA,NA
+"13","mr_sfd_183","vojik_2018_Klinec forest","Terrestrial",29,1,FALSE,10,1957,2015,0,0,0,NA,NA,NA
+"14","mr_sfd_186","wardle_2014_plants_Simpson Desert","Terrestrial",20,1,FALSE,19.747359875,1998,2009,0,0,0,NA,NA,NA
+"15","mr_sfd_187","wardle_2014_reptile_Simpson Desert","Terrestrial",20,1,FALSE,19.747359875,1999,2016,0,0,0,NA,NA,NA
+"16","mr_sfd_194","willig_2010_Luquillo Forest Dynamics Plot (LFDP)","Terrestrial",39,1,FALSE,0.16,1992,2004,1,1,1,NA,NA,NA
+"17","mr_sfd_195","wright_2021_desert grassland","Terrestrial",5,1,FALSE,0.6,2002,2011,0,0,1,NA,NA,NA
+"18","mr_sfd_196","wright_2021_desert shrubland","Terrestrial",5,1,FALSE,0.56,2002,2011,0,0,1,NA,NA,NA
+"19","mr_sfd_197","wright_2021_plains grasslands","Terrestrial",5,1,FALSE,0.64,2002,2011,0,0,1,NA,NA,NA
+"20","mr_sfd_21","amesbury_1999_Gawel transects","Marine",4,1,FALSE,4.054950134844,1974,1999,0,0,0,NA,NA,NA
+"21","mr_sfd_27","anderson_2019b_Wizard","Marine",5,1,FALSE,1.73,1997,2007,0,0,0,NA,NA,NA
+"22","mr_sfd_28","beldade_2015_Mataiva","Marine",13,1,FALSE,50,1981,2012,0,0,0,NA,NA,NA
+"23","mr_sfd_30","cervantes-yoshida_2015_Alameda Creek Watershed","Freshwater",32,1,FALSE,1800,1996,2009,0,0,0,NA,NA,NA
+"24","mr_sfd_32","christensen_2021_Jornada Experimental Range, USA","Terrestrial",80,1,FALSE,782,1927,1995,0,0,0,NA,NA,NA
+"25","mr_sfd_33","closset-kopp_2018_Compiegne Forest","Terrestrial",5,1,FALSE,144.14,1970,2015,0,1,1,NA,NA,NA
+"26","mr_sfd_34","countryside_survey_invertebrates_2017_England","Freshwater",136,1,FALSE,130279,1998,2007,0,0,0,NA,NA,NA
+"27","mr_sfd_35","countryside_survey_invertebrates_2017_Scotland","Freshwater",161,1,FALSE,77933,1990,2007,0,1,1,NA,NA,NA
+"28","mr_sfd_36","countryside_survey_invertebrates_2017_Wales","Freshwater",37,1,FALSE,20779,1998,2007,0,0,0,NA,NA,NA
+"29","mr_sfd_37","countryside_survey_macrophytes_2017_England","Freshwater",135,1,FALSE,130279,1998,2007,0,0,0,NA,NA,NA
+"30","mr_sfd_38","countryside_survey_macrophytes_2017_Scotland","Freshwater",163,1,FALSE,77933,1998,2007,0,1,1,NA,NA,NA
+"31","mr_sfd_39","countryside_survey_macrophytes_2017_Wales","Freshwater",35,1,FALSE,20779,1998,2007,0,0,0,NA,NA,NA
+"32","mr_sfd_40","countryside_survey_plants_2017_England","Terrestrial",286,1,FALSE,130279,1990,2007,0,0,0,NA,NA,NA
+"33","mr_sfd_41","countryside_survey_plants_2017_Scotland","Terrestrial",185,1,FALSE,77933,1990,2007,0,1,1,NA,NA,NA
+"34","mr_sfd_42","countryside_survey_plants_2017_Wales","Terrestrial",60,1,FALSE,20779,1998,2007,0,0,0,NA,NA,NA
+"35","mr_sfd_51","gibb_2019_Main Camp area of the Ethabuka Reserve","Terrestrial",6,1,FALSE,314.159265358979,1992,2010,0,0,1,NA,NA,NA
+"36","mr_sfd_53","green_2021_Vancouver Island, Canada","Marine",6,1,FALSE,0.0012,1975,2012,1,1,1,NA,NA,NA
+"37","mr_sfd_54","keith_2017_Royal National Park","Terrestrial",55,1,FALSE,151,1990,2007,0,0,1,NA,NA,NA
+"38","mr_sfd_55","koleskinova_2021b_PP19","Terrestrial",5,1,FALSE,615.752160103599,2008,2018,0,0,0,NA,NA,NA
+"39","mr_sfd_56","koleskinova_2021b_PP36","Terrestrial",10,1,FALSE,615.752160103599,2003,2019,0,0,0,NA,NA,NA
+"40","mr_sfd_57","larkin_2015_Illinois","Terrestrial",41,1,FALSE,37499.25,1976,2001,0,0,0,NA,NA,NA
+"41","mr_sfd_59","lightfoot_2022_Jornada Basin","Terrestrial",10,1,FALSE,120,1995,2000,0,0,0,NA,NA,NA
+"42","mr_sfd_64","mendieta-leiva_2021_San Lorenzo crane plot","Terrestrial",207,1,FALSE,0.0196,2000,2012,1,1,1,NA,NA,NA
+"43","mr_sfd_86","muthukrishnan_2019_Becker","Freshwater",4,1,FALSE,3393.97207496,2003,2012,0,0,0,NA,NA,NA
