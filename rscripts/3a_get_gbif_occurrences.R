@@ -12,7 +12,7 @@ library(rgeos)
 
 # gbif account 
 user <- "wubing" # gbif.org username 
-pwd <- "ok15920301377" # gbif.org password
+pwd <- "xxxxxxxxx" # gbif.org password
 email <- "wbingxu@gmail.com" # email 
 
 # path directory for store gbif occurrences
