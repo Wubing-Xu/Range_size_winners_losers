@@ -1,5 +1,6 @@
 # Range_size_winners_losers
-This repository contains data and code necessary to reproduce results shown in the manuscript "Widespread species increase while narrow-ranged species decrease regional occupancy in metacommunity time series".
+This repository contains data and code necessary to reproduce results shown in the paper:
+Wu-Bing Xu, Shane A. Blowes, Viviana Brambilla, Cher F. Y. Chow, Ada Fontrodona-Eslava, Inês S. Martins, Daniel McGlinn, Faye Moyes, Alban Sagouis, Hideyasu Shimadzu, Roel van Klink, Anne E. Magurran, Nicholas J. Gotelli, Brian J. McGill, Maria Dornelas, Jonathan M. Chase. Regional occupancy increases for widespread species but decreases for narrowly distributed species in metacommunity time series. Nature Communications. (accepted)
 
 **Contact:** wubing.xu@idiv.de or wbingxu@gmail.com (Wubing Xu)
 
