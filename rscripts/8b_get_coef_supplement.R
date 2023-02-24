@@ -30,13 +30,10 @@ load("models/data_input_to_models.RDATA")
 load("models/brm_oc_aoo50.RDATA")
 load("models/brm_oc_aoo100.RDATA")
 load("models/brm_oc_ahull6.RDATA")
-load("models/brm_oc_aoo10_2yr.RDATA")
 load("models/brm_oc_aoo10_rgbif.RDATA")
-load("models/brm_oc_aoo10_no01.RDATA")
 load("models/brm_oc_aoo10_sloc.RDATA")
 load("models/brm_oc_aoo10_realm_region.RDATA")
 load("models/brm_oc_aoo10_realm_taxa.RDATA")
-load("models/brm_oc_aoo10_region.RDATA")
 
 
 #############
@@ -156,29 +153,6 @@ brm_oc_aoo10_sloc_coef <- brm_oc_aoo10_sloc_coef %>%
 
 
 #############
-## get coefficients from models using occupancy that were calculated using first and last year community data 
-
-## global fixed effects of range size
-brm_oc_aoo10_2yr_fixed <- fixef(brm_oc_aoo10_2yr, probs = c(0.025, 0.975)) %>%
-  as_tibble() %>%
-  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
-
-## random effects of rang size for each study
-brm_oc_aoo10_2yr_coef <- coef(brm_oc_aoo10_2yr, probs = c(0.025, 0.975))[[1]]
-brm_oc_aoo10_2yr_coef <- as_tibble(brm_oc_aoo10_2yr_coef) %>%
-  dplyr::select(1:8) %>%
-  mutate(study = rownames(brm_oc_aoo10_2yr_coef)) 
-colnames(brm_oc_aoo10_2yr_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
-                                      "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
-
-brm_oc_aoo10_2yr_coef <- brm_oc_aoo10_2yr_coef %>% 
-  mutate(sig_slope = ifelse(Q2.5_slope < 0 & Q97.5_slope >0, "neutral", ifelse(Q97.5_slope <= 0, "negative", "positive")),
-         sig_slope = factor(sig_slope, levels = c("negative", "positive", "neutral"))) %>%
-  left_join(dat_meta) %>%
-  relocate(study, database, studyID, study_name)
-
-
-#############
 ## get coefficients from models using species that have 5-times of occurrences in GBIF than in community data
 
 ## global fixed effects of range size
@@ -199,30 +173,6 @@ brm_oc_aoo10_rgbif_coef <- brm_oc_aoo10_rgbif_coef %>%
          sig_slope = factor(sig_slope, levels = c("negative", "positive", "neutral"))) %>%
   left_join(dat_meta) %>%
   relocate(study, database, studyID, study_name)
-
-
-#############
-## get coefficients from models using species with initial occupancy not as 0 or 1.
-
-## global fixed effects of range size
-brm_oc_aoo10_no01_fixed <- fixef(brm_oc_aoo10_no01, probs = c(0.025, 0.975)) %>%
-  as_tibble() %>%
-  mutate(term = c("intercept", "sigma_intercept" ,"slope", "sigma_nsamp")) 
-
-## random effects of rang size for each study
-brm_oc_aoo10_no01_coef <- coef(brm_oc_aoo10_no01, probs = c(0.025, 0.975))[[1]]
-brm_oc_aoo10_no01_coef <- as_tibble(brm_oc_aoo10_no01_coef) %>%
-  dplyr::select(1:8) %>%
-  mutate(study = rownames(brm_oc_aoo10_no01_coef)) 
-colnames(brm_oc_aoo10_no01_coef)[1:8] <- c("estimate_intercept", "se_intercept", "Q2.5_intercept", "Q97.5_intercept", 
-                                      "estimate_slope", "se_slope", "Q2.5_slope", "Q97.5_slope")
-
-brm_oc_aoo10_no01_coef <- brm_oc_aoo10_no01_coef %>% 
-  mutate(sig_slope = ifelse(Q2.5_slope < 0 & Q97.5_slope >0, "neutral", ifelse(Q97.5_slope <= 0, "negative", "positive")),
-         sig_slope = factor(sig_slope, levels = c("negative", "positive", "neutral"))) %>%
-  left_join(dat_meta) %>%
-  relocate(study, database, studyID, study_name)
-
 
 
 #############
@@ -321,9 +271,7 @@ save(brm_oc_aoo50_fixed, brm_oc_aoo50_coef,
      brm_oc_aoo100_fixed, brm_oc_aoo100_coef, 
      brm_oc_ahull6_fixed, brm_oc_ahull6_coef, 
      brm_oc_aoo10_sloc_fixed, brm_oc_aoo10_sloc_coef,
-     brm_oc_aoo10_2yr_fixed, brm_oc_aoo10_2yr_coef, 
      brm_oc_aoo10_rgbif_fixed, brm_oc_aoo10_rgbif_coef, 
-     brm_oc_aoo10_no01_fixed, brm_oc_aoo10_no01_coef, 
      brm_oc_aoo10_realm_taxa_fixed, brm_oc_aoo10_realm_taxa_line, brm_oc_aoo10_realm_taxa_fitted,
      brm_oc_aoo10_realm_region_fixed, brm_oc_aoo10_realm_region_line, brm_oc_aoo10_realm_region_fitted,
      file = "results/coefs_supplement_brms.RDATA")

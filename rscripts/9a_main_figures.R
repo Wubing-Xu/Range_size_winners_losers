@@ -38,7 +38,7 @@ brm_oc_aoo10_realm_coef <- brm_oc_aoo10_realm_coef %>%
 
 
 # summary of used studies for table S1 
-study_used <- brm_oc_aoo10_coef %>% dplyr::select(study, database, studyID, study_name, start_year, end_year, n_years, realm, taxon, taxon_new, region, psamp_inPA_bflate, estimate_slope)
+study_used <- brm_oc_aoo10_coef %>% dplyr::select(study, database, studyID, study_name, start_year, end_year, n_years, realm, taxon, taxon_new, region, sprich_range, psamp_inPA_bflate, estimate_slope)
 
 
 # save study-level coefficients

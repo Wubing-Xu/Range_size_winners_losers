@@ -142,29 +142,6 @@ get_occup_change <- function(x){
 ############
 # calculate occupancy
 
-#######
-# Use the first and last years to calculate occupancy
-dat_occupancy_2yr <- dat %>% 
-  filter(period %in% c("first", "last")) %>% 
-  dplyr::select(study, year, sample, specieskey)
-
-# calculate occupancy
-occupancy_2yr <- get_occupancy(data = dat_occupancy_2yr,
-                           fillspecies = TRUE, trimsamples = FALSE, occ_full = FALSE, occ_rarefy = TRUE, resamples = 1)
-
-occupancy_2yr <- occupancy_2yr %>% 
-  rename(specieskey = species) %>%
-  left_join(dat %>% distinct(study, database, studyID, study_name, year, period), by =c("study", "year")) %>%
-  left_join(dat %>% distinct(species, specieskey), by =c("specieskey")) %>%
-  mutate(nsamp_used = min_samp) %>%
-  relocate(database, studyID, study_name, .after = study) %>% 
-  relocate(period, .after = year) %>% 
-  relocate(species, .after = specieskey) %>% 
-  relocate(nsamp_used, .after = min_samp)
-
-
-
-#######
 # Combine same number of years before and after the median of start and end of years to calculate occupancy
 
 # to determine which years will be combined
@@ -241,30 +218,6 @@ occupancy_period <- occupancy %>%
 ############
 # calculate occupancy change
 
-## use the data in first and last years
-# nest different years of the same species
-occupancy_2yr_nest <- occupancy_2yr %>% 
-  dplyr::select(-period, - n_samp) %>%
-  group_by(resample, study, species) %>%
-  nest(data = c(year, n_occ, occupancy)) %>%
-  ungroup()
-
-occupancy_change_2yr <- tibble()
-for(i in 1:nrow(occupancy_2yr_nest)){
-  res <- get_occup_change(x = occupancy_2yr_nest[i,]$data[[1]])
-  occupancy_change_2yr <- bind_rows(occupancy_change_2yr, res)
-}
-
-occupancy_change_2yr <- occupancy_2yr_nest %>% 
-  dplyr::select(-data) %>%
-  bind_cols(occupancy_change_2yr) %>% 
-  left_join(dat %>% distinct(specieskey, nocc_community, nocc_gbif, ratio_nocc_gbif), by = c("specieskey")) %>%
-  left_join(spsuma[,c(2,14:17)], by = c("specieskey")) %>%
-  filter(dynamic != "absent")
-
-table(occupancy_change_2yr[, c("dynamic", "database")])
-
-
 ## use the data combined years as periods
 # nest different years of the same species
 occupancy_period_nest <- occupancy_period %>% 
@@ -290,7 +243,7 @@ table(occupancy_change_period[, c("dynamic", "database")])
 
 
 # save occupancy 
-save(occupancy_2yr, occupancy_period, occupancy_change_2yr, occupancy_change_period, years_period, dat_meta, 
+save(occupancy_period, occupancy_change_period, years_period, dat_meta, 
      file = "intermediate_results/occupancy.RDATA")
 
 

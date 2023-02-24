@@ -135,32 +135,24 @@ ggsave("results/Fig.S_sensitivity_slopes_rangesize.png", width = 180, height = 6
 
 ############
 ## Figure comparing slopes shown in main text with 
-# slopes based on samples in same locations across year, slopes based on first and last year data,
-# based on species with relatively more occurrences in GBIF, based on species with initial occupancy >0 & <1
+# slopes based on samples in same locations across year, 
+# based on species with relatively more occurrences in GBIF
 
 # combine study-level slopes
 brm_oc_aoo10_coef_sens <- brm_oc_aoo10_coef %>%
   dplyr::select(study, database, realm, taxon_new, slope_all = estimate_slope, Q2.5_all = Q2.5_slope, Q97.5_all = Q97.5_slope) %>%
   left_join(brm_oc_aoo10_sloc_coef %>%
               dplyr::select(study, slope_sloc = estimate_slope, Q2.5_sloc = Q2.5_slope, Q97.5_sloc = Q97.5_slope)) %>%
-  left_join(brm_oc_aoo10_2yr_coef %>%
-              dplyr::select(study, slope_2yr = estimate_slope, Q2.5_2yr = Q2.5_slope, Q97.5_2yr = Q97.5_slope)) %>%
   left_join(brm_oc_aoo10_rgbif_coef %>%
-              dplyr::select(study, slope_rgbif = estimate_slope, Q2.5_rgbif = Q2.5_slope, Q97.5_rgbif = Q97.5_slope)) %>% 
-  left_join(brm_oc_aoo10_no01_coef %>%
-              dplyr::select(study, slope_no01 = estimate_slope, Q2.5_no01 = Q2.5_slope, Q97.5_no01 = Q97.5_slope))
+              dplyr::select(study, slope_rgbif = estimate_slope, Q2.5_rgbif = Q2.5_slope, Q97.5_rgbif = Q97.5_slope))
 
 # combine global slopes
 brm_oc_aoo10_fixed_sens <- brm_oc_aoo10_fixed %>%
   dplyr::select(term, slope_all = Estimate, Q2.5_all = Q2.5, Q97.5_all = Q97.5) %>%
   left_join(brm_oc_aoo10_sloc_fixed %>%
               dplyr::select(term, slope_sloc = Estimate, Q2.5_sloc = Q2.5, Q97.5_sloc = Q97.5)) %>%
-  left_join(brm_oc_aoo10_2yr_fixed %>%
-              dplyr::select(term, slope_2yr = Estimate, Q2.5_2yr = Q2.5, Q97.5_2yr = Q97.5)) %>%
   left_join(brm_oc_aoo10_rgbif_fixed %>%
               dplyr::select(term, slope_rgbif = Estimate, Q2.5_rgbif = Q2.5, Q97.5_rgbif = Q97.5)) %>%
-  left_join(brm_oc_aoo10_no01_fixed %>%
-              dplyr::select(term, slope_no01 = Estimate, Q2.5_no01 = Q2.5, Q97.5_no01 = Q97.5)) %>%
   filter(term == "slope")
 
 
@@ -175,8 +167,8 @@ slope_all_rgbif <- ggplot(data = brm_oc_aoo10_coef_sens %>% filter(!is.na(slope_
   geom_linerange(data = brm_oc_aoo10_fixed_sens, aes(x = slope_all, ymin = Q2.5_rgbif, ymax = Q97.5_rgbif), size = 0.3, color = "red") + 
   geom_linerange(data = brm_oc_aoo10_fixed_sens, aes(y = slope_rgbif, xmin = Q2.5_all, xmax = Q97.5_all), size = 0.3, color = "red") + 
   geom_abline(intercept = 0, slope = 1, linetype =2, size = 0.3, colour = "blue") + 
-  xlim(min(brm_oc_aoo10_coef_sens[,c(6, 15)], na.rm=TRUE), max(brm_oc_aoo10_coef_sens[,c(7, 16)], na.rm=TRUE)) + 
-  ylim(min(brm_oc_aoo10_coef_sens[,c(6, 15)], na.rm=TRUE), max(brm_oc_aoo10_coef_sens[,c(7, 16)], na.rm=TRUE)) + 
+  xlim(min(brm_oc_aoo10_coef_sens[,c(6, 12)], na.rm=TRUE), max(brm_oc_aoo10_coef_sens[,c(7, 13)], na.rm=TRUE)) + 
+  ylim(min(brm_oc_aoo10_coef_sens[,c(6, 13)], na.rm=TRUE), max(brm_oc_aoo10_coef_sens[,c(7, 13)], na.rm=TRUE)) + 
   labs(x = "", y = "Slopes based on species with\n relatively more occurrences in GBIF", tag = "a") + 
   theme_classic() +
   #theme_bw() + 
@@ -213,75 +205,11 @@ slope_all_sloc <- ggplot(data = brm_oc_aoo10_coef_sens %>% filter(!is.na(slope_s
         panel.grid.minor = element_blank())
 
 
-slope_all_2yr <- ggplot(data = brm_oc_aoo10_coef_sens) +
-  geom_linerange(aes(x = slope_all, ymin = Q2.5_2yr, ymax = Q97.5_2yr), color = "darkgray", size = 0.3) + 
-  geom_linerange(aes(y = slope_2yr, xmin = Q2.5_all, xmax = Q97.5_all), color = "darkgray", size = 0.3) + 
-  geom_point(aes(x = slope_all, y = slope_2yr), shape = 16, size = 0.8, alpha = 0.5) + 
-  geom_hline(yintercept = 0, linetype =2, size = 0.3, colour = "black") +
-  geom_vline(xintercept = 0, linetype =2, size = 0.3, colour = "black") + 
-  geom_point(data = brm_oc_aoo10_fixed_sens, aes(x = slope_all, y = slope_2yr), 
-             shape = 16, size = 0.8, alpha = 1, color = "red") + 
-  geom_linerange(data = brm_oc_aoo10_fixed_sens, aes(x = slope_all, ymin = Q2.5_2yr, ymax = Q97.5_2yr), size = 0.3, color = "red") + 
-  geom_linerange(data = brm_oc_aoo10_fixed_sens, aes(y = slope_2yr, xmin = Q2.5_all, xmax = Q97.5_all), size = 0.3, color = "red") + 
-  geom_abline(intercept = 0, slope = 1, linetype =2, size = 0.3, colour = "blue") + 
-  xlim(min(brm_oc_aoo10_coef_sens[,c(6, 12)]), max(brm_oc_aoo10_coef_sens[,c(7, 13)])) + 
-  ylim(min(brm_oc_aoo10_coef_sens[,c(6, 12)]), max(brm_oc_aoo10_coef_sens[,c(7, 13)])) + 
-  labs(x = "", y = "Slopes based on samples\n in first and last year", tag = "c") + 
-  theme_classic() +
-  #theme_bw() + 
-  theme(legend.position = "n", 
-        plot.margin = unit(c(0.02, 0.05, 0, 0.05), "cm"),
-        text = element_text(size = 6),
-        axis.title.y = element_text(size = 8),
-        plot.tag = element_text(size = 8, face = 'bold'),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-
-
-slope_all_no01  <- ggplot(data = brm_oc_aoo10_coef_sens %>% filter(!is.na(slope_no01))) +
-  geom_linerange(aes(x = slope_all, ymin = Q2.5_no01, ymax = Q97.5_no01), color = "darkgray", size = 0.3) + 
-  geom_linerange(aes(y = slope_no01, xmin = Q2.5_all, xmax = Q97.5_all), color = "darkgray", size = 0.3) + 
-  geom_point(aes(x = slope_all, y = slope_no01), shape = 16, size = 0.8, alpha = 0.5) + 
-  geom_hline(yintercept = 0, linetype =2, size = 0.3, colour = "black") +
-  geom_vline(xintercept = 0, linetype =2, size = 0.3, colour = "black") + 
-  geom_point(data = brm_oc_aoo10_fixed_sens, aes(x = slope_all, y = slope_no01), 
-             shape = 16, size = 0.8, alpha = 1, color = "red") + 
-  geom_linerange(data = brm_oc_aoo10_fixed_sens, aes(x = slope_all, ymin = Q2.5_no01, ymax = Q97.5_no01), size = 0.3, color = "red") + 
-  geom_linerange(data = brm_oc_aoo10_fixed_sens, aes(y = slope_no01, xmin = Q2.5_all, xmax = Q97.5_all), size = 0.3, color = "red") + 
-  geom_abline(intercept = 0, slope = 1, linetype =2, size = 0.3, colour = "blue") + 
-  xlim(min(brm_oc_aoo10_coef_sens[,c(6, 18)], na.rm=TRUE), max(brm_oc_aoo10_coef_sens[,c(7, 19)], na.rm=TRUE)) + 
-  ylim(min(brm_oc_aoo10_coef_sens[,c(6, 18)], na.rm=TRUE), max(brm_oc_aoo10_coef_sens[,c(7, 19)], na.rm=TRUE)) + 
-  labs(x = "", y = "Slopes based on species with\n initial occupancy >0 & <1", tag = "d") + 
-  theme_classic() +
-  #theme_bw() + 
-  theme(legend.position = "n", 
-        plot.margin = unit(c(0.02, 0.05, 0.08, 0.05), "cm"),
-        text = element_text(size = 6),
-        axis.title.y = element_text(size = 8),
-        plot.tag = element_text(size = 8, face = 'bold'),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-
-
 cowplot::plot_grid(slope_all_rgbif, slope_all_sloc, 
                    nrow = 1, align = "hv") +
   cowplot::draw_label("Slopes reported in main text", y = 0.05, size = 8)
 
 ggsave("results/Fig.S_sensitivity_slopes_compare.png", width = 120, height = 60, units = 'mm', dpi = 600)
-
-
-cowplot::plot_grid(slope_all_rgbif, slope_all_sloc, slope_all_2yr, 
-                   nrow = 1, align = "hv") +
-  cowplot::draw_label("Slopes reported in main text", y = 0.05, size = 8)
-
-ggsave("results/Fig.S_sensitivity_slopes_compare.png", width = 180, height = 60, units = 'mm', dpi = 600)
-
-
-cowplot::plot_grid(slope_all_sloc, slope_all_2yr, slope_all_rgbif, slope_all_no01, 
-                   nrow = 2, rel_heights = c(1, 1.02)) +
-  cowplot::draw_label("Slopes reported in main text", y = 0.015, size = 8)
-
-ggsave("results/Fig.S_sensitivity_slopes_compare.png", width = 120, height = 110, units = 'mm', dpi = 600)
 
 
 
